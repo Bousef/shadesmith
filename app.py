@@ -210,7 +210,7 @@ def list_files():
     except Exception as e:
         return jsonify({"error": f"Failed to list files: {str(e)}"}), 500
 
-def rgb_to_cmyk_real_life(r, g, b):
+def rgb_to_cmyk(r, g, b):
     """Convert RGB to CMYK with adjustments for real-life paint mixing."""
     # Normalize RGB values
     r_prime = r / 255.0
@@ -220,8 +220,8 @@ def rgb_to_cmyk_real_life(r, g, b):
     # Calculate K (Black)
     k = 1 - max(r_prime, g_prime, b_prime)
 
-    # Adjust K to avoid unnecessary darkening for vibrant colors
-    if k > 0.5 and (r > 200 or g > 200 or b > 200):  # Avoid high K for bright colors
+    # Avoid introducing black for vibrant colors
+    if k > 0.5 and (r > 100 or g > 100 or b > 100):  # Adjust threshold for bright colors
         k = 0
 
     if k == 1:
