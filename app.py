@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify
 from agent.agent import get_project_info, calculate_shade_percentage
 from google.cloud import vision
