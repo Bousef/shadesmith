@@ -59,7 +59,7 @@
           "host": ["{{base_url}}"],
           "path": ["rgb-to-cmyk"]
         },
-        "description": "Convert RGB color values to CMYK format"
+        "description": "Convert RGB color values to CMYK format using JSON input (no files needed)"
       },
       "response": []
     },
@@ -82,7 +82,7 @@
           "host": ["{{base_url}}"],
           "path": ["rgbToRatio"]
         },
-        "description": "Calculate optimal paint mixing ratios for a target color"
+        "description": "Calculate optimal paint mixing ratios for a target color using RGB values (no files needed)"
       },
       "response": []
     },
@@ -105,7 +105,7 @@
           "host": ["{{base_url}}"],
           "path": ["shade-percentage"]
         },
-        "description": "Calculate the shade percentage of a color"
+        "description": "Calculate the shade percentage of a color using RGB values (no files needed)"
       },
       "response": []
     },
@@ -130,7 +130,7 @@
           "host": ["{{base_url}}"],
           "path": ["convert-to-png"]
         },
-        "description": "Convert a single image to PNG format"
+        "description": "Convert a single image to PNG format (requires file upload)"
       },
       "response": []
     },
@@ -167,7 +167,7 @@
           "host": ["{{base_url}}"],
           "path": ["convert-multiple-images"]
         },
-        "description": "Convert multiple images to PNG format for color analysis"
+        "description": "Convert multiple images to PNG format for color analysis (requires file uploads)"
       },
       "response": []
     },
@@ -204,7 +204,7 @@
           "host": ["{{base_url}}"],
           "path": ["scan-rgb-from-images"]
         },
-        "description": "Extract RGB values from multiple images using Google Cloud Vision API"
+        "description": "Extract RGB values from multiple images using Google Cloud Vision API (requires file uploads)"
       },
       "response": []
     },
@@ -247,7 +247,7 @@
           "host": ["{{base_url}}"],
           "path": ["complete-paint-mixing"]
         },
-        "description": "Complete pipeline: Image Converter → RGB Scanner → Calculations → Results"
+        "description": "Complete pipeline: Image Converter → RGB Scanner → Calculations → Results (requires file uploads + target RGB)"
       },
       "response": []
     },
@@ -272,7 +272,7 @@
           "host": ["{{base_url}}"],
           "path": ["test-vision"]
         },
-        "description": "Test Google Cloud Vision API for color detection"
+        "description": "Test Google Cloud Vision API for color detection (requires file upload)"
       },
       "response": []
     },
@@ -286,7 +286,7 @@
           "host": ["{{base_url}}"],
           "path": ["list-files"]
         },
-        "description": "List all available converted PNG files"
+        "description": "List all available converted PNG files (no parameters needed)"
       },
       "response": []
     }
