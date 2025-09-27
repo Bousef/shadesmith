@@ -7,6 +7,8 @@ import os
 from werkzeug.utils import secure_filename
 import uuid
 import time
+from itertools import permutations
+import math
 
 app = Flask(__name__)
 
@@ -207,6 +209,94 @@ def list_files():
         })
     except Exception as e:
         return jsonify({"error": f"Failed to list files: {str(e)}"}), 500
+
+def rgb_to_cmyk_real_life(r, g, b):
+    """Convert RGB to CMYK with adjustments for real-life paint mixing."""
+    # Normalize RGB values
+    r_prime = r / 255.0
+    g_prime = g / 255.0
+    b_prime = b / 255.0
+
+    # Calculate K (Black)
+    k = 1 - max(r_prime, g_prime, b_prime)
+
+    # Adjust K to avoid unnecessary darkening for vibrant colors
+    if k > 0.5 and (r > 200 or g > 200 or b > 200):  # Avoid high K for bright colors
+        k = 0
+
+    if k == 1:
+        return {"c": 0, "m": 0, "y": 0, "k": 100}
+
+    # Calculate C, M, Y
+    c = (1 - r_prime - k) / (1 - k) if k < 1 else 0
+    m = (1 - g_prime - k) / (1 - k) if k < 1 else 0
+    y = (1 - b_prime - k) / (1 - k) if k < 1 else 0
+
+    return {"c": round(c * 100), "m": round(m * 100), "y": round(y * 100), "k": round(k * 100)}
+
+
+@app.route('/rgbToRatio', methods=['POST'])
+def rgbToRatio():
+    try:
+        # Get input data
+        data = request.json
+        target_rgb = data.get("target_rgb")  # Example: { "r": 255, "g": 255, "b": 0 }
+        user_colors = data.get("user_colors")  # Example: [ { "r": 255, "g": 0, "b": 0 }, { "r": 0, "g": 255, "b": 0 } ]
+
+        if not target_rgb or not user_colors or len(user_colors) > 3:
+            return jsonify({"error": "Invalid input. Provide target_rgb and up to 3 user_colors."}), 400
+
+        # Normalize target RGB values
+        target_r, target_g, target_b = target_rgb["r"], target_rgb["g"], target_rgb["b"]
+
+        # Generate permutations of ratios (e.g., [0.5, 0.3, 0.2])
+        ratios = [0.1 * i for i in range(11)]  # Generate ratios from 0.0 to 1.0 in steps of 0.1
+        permutations_of_ratios = [p for p in permutations(ratios, len(user_colors)) if sum(p) == 1.0]
+
+        closest_match = None
+        min_distance = float("inf")
+
+        # Iterate through permutations of ratios
+        for ratio_set in permutations_of_ratios:
+            mixed_r, mixed_g, mixed_b = 0, 0, 0
+
+            # Mix colors based on ratios
+            for i, ratio in enumerate(ratio_set):
+                mixed_r += user_colors[i]["r"] * ratio
+                mixed_g += user_colors[i]["g"] * ratio
+                mixed_b += user_colors[i]["b"] * ratio
+
+            # Calculate Euclidean distance to target RGB
+            distance = math.sqrt((mixed_r - target_r) ** 2 + (mixed_g - target_g) ** 2 + (mixed_b - target_b) ** 2)
+
+            # Update closest match
+            if distance < min_distance:
+                min_distance = distance
+                closest_match = {
+                    "ratios": ratio_set,
+                    "mixed_rgb": { "r": int(mixed_r), "g": int(mixed_g), "b": int(mixed_b) },
+                    "distance": distance
+                }
+
+        # Convert target RGB and mixed RGB to CMYK
+        target_cmyk = rgb_to_cmyk(target_r, target_g, target_b)
+        mixed_cmyk = rgb_to_cmyk(closest_match["mixed_rgb"]["r"], closest_match["mixed_rgb"]["g"], closest_match["mixed_rgb"]["b"])
+
+        # Return the closest match with CMYK values
+        return jsonify({
+            "success": True,
+            "target_rgb": target_rgb,
+            "target_cmyk": target_cmyk,
+            "closest_match": {
+                "ratios": closest_match["ratios"],
+                "mixed_rgb": closest_match["mixed_rgb"],
+                "mixed_cmyk": mixed_cmyk,
+                "distance": closest_match["distance"]
+            }
+        })
+    except Exception as e:
+        print(f"Error: {e}")  # Log the error
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
