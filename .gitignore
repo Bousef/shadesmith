@@ -12,6 +12,9 @@
 .swiftpm/
 migrate_working_dir/
 
+#Keys
+keys/*.json
+
 # IntelliJ related
 *.iml
 *.ipr
