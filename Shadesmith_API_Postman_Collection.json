@@ -1,0 +1,294 @@
+{
+  "info": {
+    "name": "Shadesmith Multi-Agent Pipeline API",
+    "description": "Complete collection for testing the Shadesmith color analysis and paint mixing API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Pipeline Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/pipeline-status",
+          "host": ["{{base_url}}"],
+          "path": ["pipeline-status"]
+        },
+        "description": "Check the status of all pipeline components and available endpoints"
+      },
+      "response": []
+    },
+    {
+      "name": "Project Info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/project-info",
+          "host": ["{{base_url}}"],
+          "path": ["project-info"]
+        },
+        "description": "Get information about the Shadesmith project"
+      },
+      "response": []
+    },
+    {
+      "name": "RGB to CMYK Conversion",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"r\": 255,\n  \"g\": 192,\n  \"b\": 203\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/rgb-to-cmyk",
+          "host": ["{{base_url}}"],
+          "path": ["rgb-to-cmyk"]
+        },
+        "description": "Convert RGB color values to CMYK format"
+      },
+      "response": []
+    },
+    {
+      "name": "Paint Mixing Calculation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_colors\": [\n    {\"r\": 255, \"g\": 0, \"b\": 0},\n    {\"r\": 255, \"g\": 255, \"b\": 255}\n  ],\n  \"target_rgb\": {\"r\": 255, \"g\": 192, \"b\": 203}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/rgbToRatio",
+          "host": ["{{base_url}}"],
+          "path": ["rgbToRatio"]
+        },
+        "description": "Calculate optimal paint mixing ratios for a target color"
+      },
+      "response": []
+    },
+    {
+      "name": "Shade Percentage Calculation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"light_value\": 128,\n  \"max_light\": 255\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/shade-percentage",
+          "host": ["{{base_url}}"],
+          "path": ["shade-percentage"]
+        },
+        "description": "Calculate the shade percentage of a color"
+      },
+      "response": []
+    },
+    {
+      "name": "Single Image Conversion",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": [],
+              "description": "Select an image file to convert to PNG"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/convert-to-png",
+          "host": ["{{base_url}}"],
+          "path": ["convert-to-png"]
+        },
+        "description": "Convert a single image to PNG format"
+      },
+      "response": []
+    },
+    {
+      "name": "Multiple Image Conversion",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "Select first image file"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "Select second image file (optional)"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "Select third image file (optional)"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/convert-multiple-images",
+          "host": ["{{base_url}}"],
+          "path": ["convert-multiple-images"]
+        },
+        "description": "Convert multiple images to PNG format for color analysis"
+      },
+      "response": []
+    },
+    {
+      "name": "RGB Scanning from Images",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "Select first image file"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "Select second image file (optional)"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "Select third image file (optional)"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/scan-rgb-from-images",
+          "host": ["{{base_url}}"],
+          "path": ["scan-rgb-from-images"]
+        },
+        "description": "Extract RGB values from multiple images using Google Cloud Vision API"
+      },
+      "response": []
+    },
+    {
+      "name": "Complete Paint Mixing Pipeline",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "Select first color image (e.g., red paint)"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "Select second color image (e.g., white paint)"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "Select third color image (optional)"
+            },
+            {
+              "key": "target_rgb",
+              "value": "{\"r\": 255, \"g\": 192, \"b\": 203}",
+              "type": "text",
+              "description": "Target color in JSON format (e.g., light pink)"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/complete-paint-mixing",
+          "host": ["{{base_url}}"],
+          "path": ["complete-paint-mixing"]
+        },
+        "description": "Complete pipeline: Image Converter → RGB Scanner → Calculations → Results"
+      },
+      "response": []
+    },
+    {
+      "name": "Test Vision API",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": [],
+              "description": "Select an image file to test Google Cloud Vision API"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/test-vision",
+          "host": ["{{base_url}}"],
+          "path": ["test-vision"]
+        },
+        "description": "Test Google Cloud Vision API for color detection"
+      },
+      "response": []
+    },
+    {
+      "name": "List Converted Files",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/list-files",
+          "host": ["{{base_url}}"],
+          "path": ["list-files"]
+        },
+        "description": "List all available converted PNG files"
+      },
+      "response": []
+    }
+  ]
+}
