@@ -1,30 +1,21 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-import 'firebase_options.dart';
-import 'widgets/auth_wrapper.dart';
 import 'services/app_auth_provider.dart';
+import 'widgets/auth_wrapper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform, // <-- USE OPTIONS
-    );
-    runApp(const ShadeSmithApp());
-  } catch (e) {
-    // If init fails, show a simple error screen
-    runApp(FirebaseErrorApp(error: e.toString()));
-  }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  runApp(const ShadeSmithApp());
 }
 
 class FirebaseErrorApp extends StatelessWidget {
