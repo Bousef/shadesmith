@@ -6,6 +6,7 @@ from google.cloud import vision
 import os
 from werkzeug.utils import secure_filename
 import uuid
+import time
 
 app = Flask(__name__)
 
@@ -18,6 +19,20 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def cleanup_old_files():
+    """Remove files older than 1 hour from uploads folder."""
+    try:
+        current_time = time.time()
+        for filename in os.listdir(UPLOAD_FOLDER):
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.isfile(file_path):
+                file_age = current_time - os.path.getmtime(file_path)
+                if file_age > 3600:  # 1 hour in seconds
+                    os.remove(file_path)
+                    print(f"Cleaned up old file: {filename}")
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
 
 @app.route("/", methods=["GET"])
 def home():
@@ -133,14 +148,51 @@ def convert_to_png():
 def download_file(filename):
     """Download converted PNG file."""
     try:
+        # Security check - ensure filename is safe
+        if not filename or '..' in filename or '/' in filename:
+            return jsonify({"error": "Invalid filename"}), 400
+            
         file_path = os.path.join(UPLOAD_FOLDER, filename)
+        
         if os.path.exists(file_path):
             from flask import send_file
             return send_file(file_path, as_attachment=True, download_name=filename)
         else:
-            return jsonify({"error": "File not found"}), 404
+            # List available files for debugging
+            available_files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.png')]
+            return jsonify({
+                "error": f"File '{filename}' not found",
+                "available_files": available_files,
+                "hint": "Make sure you're using the exact filename returned from the conversion API"
+            }), 404
     except Exception as e:
         return jsonify({"error": f"Download failed: {str(e)}"}), 500
+
+@app.route('/list-files', methods=['GET'])
+def list_files():
+    """List all available converted PNG files."""
+    try:
+        files = []
+        for filename in os.listdir(UPLOAD_FOLDER):
+            if filename.endswith('.png'):
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                file_size = os.path.getsize(file_path)
+                file_mtime = os.path.getmtime(file_path)
+                files.append({
+                    "filename": filename,
+                    "size_bytes": file_size,
+                    "size_mb": round(file_size / (1024 * 1024), 2),
+                    "created": time.ctime(file_mtime),
+                    "download_url": f"/download/{filename}"
+                })
+        
+        return jsonify({
+            "success": True,
+            "files": files,
+            "count": len(files)
+        })
+    except Exception as e:
+        return jsonify({"error": f"Failed to list files: {str(e)}"}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
