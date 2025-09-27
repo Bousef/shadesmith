@@ -12,6 +12,10 @@ class AppAuthProvider with ChangeNotifier {
 
   AppAuthProvider(FirebaseAuth firebaseAuth)
       : _authService = AuthService(firebaseAuth) {
+    // Start with no user to force landing screen on fresh launch
+    _user = null;
+    _isLoading = false;
+    
     _authService.authStateChanges.listen((User? user) {
       _user = user;
       _isLoading = false;        // stop loading on first event
