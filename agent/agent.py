@@ -12,6 +12,9 @@ def get_project_info():
 
 def calculate_shade_percentage(light_value: float, max_light: float = 100.0):
     """Calculate shade percentage based on light value."""
+    if max_light <= 0:
+        return {"error": "max_light must be greater than 0"}
+    
     if light_value < 0 or light_value > max_light:
         return {"error": "Light value must be between 0 and max_light"}
     
