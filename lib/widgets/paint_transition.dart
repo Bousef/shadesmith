@@ -110,9 +110,10 @@ class _PaintTransitionState extends State<PaintTransition>
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF6B46C1),
-                  Color(0xFF4C51BF),
-                  Color(0xFF3182CE),
+                      Color(0xFFE53E3E),
+                      Color(0xFFECC94B),
+                      Color(0xFF3182CE),
+
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,

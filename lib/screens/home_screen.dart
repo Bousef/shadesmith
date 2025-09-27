@@ -135,18 +135,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       height: 50,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.black.withOpacity(0.4), // Much darker navbar
         borderRadius: BorderRadius.circular(0), // Square container
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withOpacity(0.15), // Slightly darker indicator
           borderRadius: BorderRadius.circular(0), // Square indicator
         ),
         indicatorSize: TabBarIndicatorSize.tab, // Indicator matches tab size
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.white70,
+        unselectedLabelColor: Colors.white60, // Slightly dimmer unselected text
         labelStyle: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -164,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.camera_alt, size: 18),
+                const Icon(Icons.camera_alt, size: 18, color: Color(0xFFA855F7)), // Brighter purple
                 const SizedBox(height: 2),
                 Text(
                   'Capture',
@@ -178,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.palette, size: 18),
+                const Icon(Icons.palette, size: 18, color: Color(0xFF9333EA)), // Brighter purple
                 const SizedBox(height: 2),
                 Text(
                   'Pallets',
@@ -192,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.history, size: 18),
+                const Icon(Icons.history, size: 18, color: Color(0xFF7C3AED)), // Brighter purple
                 const SizedBox(height: 2),
                 Text(
                   'Logs',
@@ -206,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.person, size: 18),
+                const Icon(Icons.person, size: 18, color: Color(0xFF6D28D9)), // Brighter purple
                 const SizedBox(height: 2),
                 Text(
                   'Profile',
@@ -226,40 +230,123 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Target Color Selection',
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+          // Artistic Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.purple.withOpacity(0.3),
+                  Colors.blue.withOpacity(0.2),
+                  Colors.pink.withOpacity(0.2),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.purple, Colors.pink, Colors.blue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.palette,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Color Studio',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'Capture your inspiration',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: Colors.white70,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
           
-          // Camera Capture
-          _buildFeatureCard(
-            icon: Icons.camera_alt,
-            title: 'Capture with Camera',
-            subtitle: 'Take a photo and select your target color',
-            color: const Color(0xFF3182CE),
-            onTap: () => _showCameraCapture(),
-          ),
+          const SizedBox(height: 24),
           
-          const SizedBox(height: 12),
-          
-          // RGB Input
-          _buildFeatureCard(
-            icon: Icons.color_lens,
-            title: 'Enter RGB Code',
-            subtitle: 'Input a specific color code manually',
-            color: const Color(0xFF805AD5),
-            onTap: () => _showRGBInput(),
+          // Artistic Capture Options
+          Row(
+            children: [
+              Expanded(
+                child: _buildArtisticCard(
+                  icon: Icons.camera_alt,
+                  title: 'Capture',
+                  subtitle: 'Photo & Sample',
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.withOpacity(0.8), Colors.purple.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  onTap: () => _showCameraCapture(),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildArtisticCard(
+                  icon: Icons.colorize,
+                  title: 'Color Pick',
+                  subtitle: 'RGB & HEX',
+                  gradient: LinearGradient(
+                    colors: [Colors.pink.withOpacity(0.8), Colors.orange.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  onTap: () => _showRGBInput(),
+                ),
+              ),
+            ],
           ),
           
           const SizedBox(height: 20),
           
-          // Current Target
-          _buildTargetColorDisplay(),
+          // Current Target with Artistic Design
+          _buildArtisticTargetDisplay(),
+          
+          const SizedBox(height: 20),
+          
+          // Inspiration Gallery
+          _buildInspirationGallery(),
         ],
       ),
     );
@@ -500,6 +587,244 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildArtisticCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Gradient gradient,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      height: 100,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: gradient.colors.first.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArtisticTargetDisplay() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.red.withOpacity(0.2),
+            Colors.orange.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.circle,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Target Color',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.red, Colors.red.shade700],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ready to Mix',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Select a color to begin your artistic journey',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.white70,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInspirationGallery() {
+    final inspirationColors = [
+      {'name': 'Sunset', 'colors': [Colors.orange, Colors.pink, Colors.purple]},
+      {'name': 'Ocean', 'colors': [Colors.blue, Colors.cyan, Colors.teal]},
+      {'name': 'Forest', 'colors': [Colors.green, Colors.lightGreen, Colors.amber]},
+      {'name': 'Fire', 'colors': [Colors.red, Colors.orange, Colors.yellow]},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Color Inspiration',
+          style: GoogleFonts.playfairDisplay(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 80,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: inspirationColors.length,
+            itemBuilder: (context, index) {
+              final inspiration = inspirationColors[index];
+              return Container(
+                width: 120,
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: inspiration['colors'] as List<Color>,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (inspiration['colors'] as List<Color>).first.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    inspiration['name'] as String,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTargetColorDisplay() {
     return Container(
       width: double.infinity,
@@ -530,10 +855,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.3),
+                  color: Colors.red.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.red.withOpacity(0.9),
                     width: 2,
                   ),
                 ),
@@ -543,7 +868,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white70,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -640,15 +965,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
 
-  Widget _buildColorCard(Map<String, dynamic> colorData, int index) {
+  Widget _buildArtisticColorCard(Map<String, dynamic> colorData, int index) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.15),
+            Colors.white.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withOpacity(0.3),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: (colorData['color'] as Color).withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -660,33 +999,65 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: colorData['color'] as Color,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
+                  gradient: LinearGradient(
+                    colors: [
+                      colorData['color'] as Color,
+                      (colorData['color'] as Color).withOpacity(0.8),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (colorData['color'] as Color).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Stack(
                   children: [
                     // Color info overlay
                     Positioned(
-                      bottom: 4,
-                      left: 4,
-                      right: 4,
+                      bottom: 8,
+                      left: 8,
+                      right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(4),
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           _colorToHex(colorData['color'] as Color),
                           style: GoogleFonts.inter(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                           textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    // Artistic decoration
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome,
+                          color: Colors.white,
+                          size: 10,
                         ),
                       ),
                     ),
@@ -700,29 +1071,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           Expanded(
             flex: 2,
             child: Padding(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     colorData['name'] as String,
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           'RGB: ${_colorToRGB(colorData['color'] as Color)}',
                           style: GoogleFonts.inter(
-                            fontSize: 8,
+                            fontSize: 9,
                             color: Colors.white70,
                           ),
                           maxLines: 1,
@@ -731,7 +1102,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                       GestureDetector(
                         onTap: () => _showColorDetails(colorData),
-                        child: const Icon(Icons.more_vert, color: Colors.white70, size: 12),
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.purple, Colors.blue],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(
+                            Icons.more_horiz,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -742,6 +1129,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+
+  Widget _buildColorCard(Map<String, dynamic> colorData, int index) {
+    return _buildArtisticColorCard(colorData, index);
   }
 
   String _colorToHex(Color color) {
