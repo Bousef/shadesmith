@@ -50,21 +50,35 @@ def shade_percentage():
     max_light = data.get("max_light", 100.0)
     return jsonify(calculate_shade_percentage(light_value, max_light))
 
-@app.route('/test-vision', methods=['GET'])
+@app.route('/test-vision', methods=['POST'])
 def test_vision():
     try:
-        # Set the service account key file path
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'keys/cloudvision.json'
+        # Get the uploaded image file
+        file = request.files['file']
+        image_content = file.read()
+
+        # Initialize the Vision API client
         client = vision.ImageAnnotatorClient()
 
-        with open("test-image.png", "rb") as image_file:
-            content = image_file.read()
+        # Perform image properties detection using Vision API
+        image = vision.Image(content=image_content)
+        response = client.image_properties(image=image)
 
-        image = vision.Image(content=content)
-        response = client.label_detection(image=image)
+        # Extract dominant colors
+        colors = response.image_properties_annotation.dominant_colors.colors
+        dominant_colors = []
+        for color in colors:
+            rgb = {
+                "r": int(color.color.red),
+                "g": int(color.color.green),
+                "b": int(color.color.blue),
+                "score": color.score,  # Confidence score
+                "pixel_fraction": color.pixel_fraction  # Fraction of image pixels with this color
+            }
+            dominant_colors.append(rgb)
 
-        labels = [label.description for label in response.label_annotations]
-        return jsonify(labels)
+        # Return dominant colors
+        return jsonify({"dominant_colors": dominant_colors})
     except Exception as e:
         print(f"Error: {e}")  # Log the error
         return jsonify({"error": str(e)}), 500
