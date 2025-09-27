@@ -4,13 +4,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'firebase_options.dart';              // <-- ADD THIS
+import 'firebase_options.dart';
 import 'widgets/auth_wrapper.dart';
 import 'services/app_auth_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
 
   try {
     await Firebase.initializeApp(
