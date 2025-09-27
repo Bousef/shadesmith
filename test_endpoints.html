@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadesmith Multi-Agent Pipeline Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .endpoint {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .endpoint h3 {
+            margin-top: 0;
+            color: #444;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Shadesmith Multi-Agent Pipeline Test</h1>
+    
+    <div class="container">
+        <h2>Pipeline Status</h2>
+        <div class="endpoint">
+            <h3>GET /pipeline-status</h3>
+            <button onclick="testPipelineStatus()">Check Pipeline Status</button>
+            <div id="pipeline-status-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Color Conversion</h2>
+        
+        <div class="endpoint">
+            <h3>POST /rgb-to-cmyk</h3>
+            <input type="number" id="rgb-r" placeholder="R (0-255)" value="128" min="0" max="255">
+            <input type="number" id="rgb-g" placeholder="G (0-255)" value="64" min="0" max="255">
+            <input type="number" id="rgb-b" placeholder="B (0-255)" value="192" min="0" max="255">
+            <button onclick="testRgbToCmyk()">Convert RGB to CMYK</button>
+            <div id="rgb-cmyk-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Paint Mixing</h2>
+        
+        <div class="endpoint">
+            <h3>POST /rgbToRatio</h3>
+            <h4>Target Color:</h4>
+            <input type="number" id="target-r" placeholder="Target R" value="128" min="0" max="255">
+            <input type="number" id="target-g" placeholder="Target G" value="64" min="0" max="255">
+            <input type="number" id="target-b" placeholder="Target B" value="192" min="0" max="255">
+            
+            <h4>User Colors (up to 3):</h4>
+            <div>
+                <strong>Color 1:</strong>
+                <input type="number" id="user1-r" placeholder="R" value="255" min="0" max="255">
+                <input type="number" id="user1-g" placeholder="G" value="0" min="0" max="255">
+                <input type="number" id="user1-b" placeholder="B" value="0" min="0" max="255">
+            </div>
+            <div>
+                <strong>Color 2:</strong>
+                <input type="number" id="user2-r" placeholder="R" value="0" min="0" max="255">
+                <input type="number" id="user2-g" placeholder="G" value="255" min="0" max="255">
+                <input type="number" id="user2-b" placeholder="B" value="0" min="0" max="255">
+            </div>
+            
+            <button onclick="testPaintMixing()">Calculate Paint Mixing Ratios</button>
+            <div id="paint-mixing-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Image Processing</h2>
+        
+        <div class="endpoint">
+            <h3>POST /convert-to-png</h3>
+            <input type="file" id="single-image" accept="image/*">
+            <button onclick="testSingleImageConversion()">Convert Single Image</button>
+            <div id="single-image-result" class="result"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3>POST /convert-multiple-images</h3>
+            <input type="file" id="multiple-images" accept="image/*" multiple>
+            <button onclick="testMultipleImageConversion()">Convert Multiple Images</button>
+            <div id="multiple-image-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Complete Pipeline</h2>
+        
+        <div class="endpoint">
+            <h3>POST /complete-paint-mixing</h3>
+            <p><strong>Upload images and specify target color for complete pipeline processing</strong></p>
+            
+            <h4>Target Color:</h4>
+            <input type="number" id="complete-target-r" placeholder="Target R" value="128" min="0" max="255">
+            <input type="number" id="complete-target-g" placeholder="Target G" value="64" min="0" max="255">
+            <input type="number" id="complete-target-b" placeholder="Target B" value="192" min="0" max="255">
+            
+            <h4>Upload Images (up to 3):</h4>
+            <input type="file" id="complete-images" accept="image/*" multiple>
+            
+            <button onclick="testCompletePipeline()">Run Complete Pipeline</button>
+            <div id="complete-pipeline-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8080';
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.className = `result ${isError ? 'error' : 'success'}`;
+        }
+
+        function showError(elementId, error) {
+            const element = document.getElementById(elementId);
+            element.textContent = `Error: ${error}`;
+            element.className = 'result error';
+        }
+
+        async function testPipelineStatus() {
+            try {
+                const response = await fetch(`${BASE_URL}/pipeline-status`);
+                const data = await response.json();
+                showResult('pipeline-status-result', data, !response.ok);
+            } catch (error) {
+                showError('pipeline-status-result', error.message);
+            }
+        }
+
+        async function testRgbToCmyk() {
+            try {
+                const r = document.getElementById('rgb-r').value;
+                const g = document.getElementById('rgb-g').value;
+                const b = document.getElementById('rgb-b').value;
+
+                const response = await fetch(`${BASE_URL}/rgb-to-cmyk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ r: parseInt(r), g: parseInt(g), b: parseInt(b) })
+                });
+                const data = await response.json();
+                showResult('rgb-cmyk-result', data, !response.ok);
+            } catch (error) {
+                showError('rgb-cmyk-result', error.message);
+            }
+        }
+
+        async function testPaintMixing() {
+            try {
+                const targetRgb = {
+                    r: parseInt(document.getElementById('target-r').value),
+                    g: parseInt(document.getElementById('target-g').value),
+                    b: parseInt(document.getElementById('target-b').value)
+                };
+
+                const userColors = [
+                    {
+                        r: parseInt(document.getElementById('user1-r').value),
+                        g: parseInt(document.getElementById('user1-g').value),
+                        b: parseInt(document.getElementById('user1-b').value)
+                    },
+                    {
+                        r: parseInt(document.getElementById('user2-r').value),
+                        g: parseInt(document.getElementById('user2-g').value),
+                        b: parseInt(document.getElementById('user2-b').value)
+                    }
+                ];
+
+                const response = await fetch(`${BASE_URL}/rgbToRatio`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target_rgb: targetRgb, user_colors: userColors })
+                });
+                const data = await response.json();
+                showResult('paint-mixing-result', data, !response.ok);
+            } catch (error) {
+                showError('paint-mixing-result', error.message);
+            }
+        }
+
+        async function testSingleImageConversion() {
+            try {
+                const fileInput = document.getElementById('single-image');
+                if (!fileInput.files[0]) {
+                    showError('single-image-result', 'Please select an image file');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+
+                const response = await fetch(`${BASE_URL}/convert-to-png`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                showResult('single-image-result', data, !response.ok);
+            } catch (error) {
+                showError('single-image-result', error.message);
+            }
+        }
+
+        async function testMultipleImageConversion() {
+            try {
+                const fileInput = document.getElementById('multiple-images');
+                if (!fileInput.files.length) {
+                    showError('multiple-image-result', 'Please select image files');
+                    return;
+                }
+
+                const formData = new FormData();
+                for (let file of fileInput.files) {
+                    formData.append('files', file);
+                }
+
+                const response = await fetch(`${BASE_URL}/convert-multiple-images`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                showResult('multiple-image-result', data, !response.ok);
+            } catch (error) {
+                showError('multiple-image-result', error.message);
+            }
+        }
+
+        async function testCompletePipeline() {
+            try {
+                const fileInput = document.getElementById('complete-images');
+                if (!fileInput.files.length) {
+                    showError('complete-pipeline-result', 'Please select image files');
+                    return;
+                }
+
+                const targetRgb = {
+                    r: parseInt(document.getElementById('complete-target-r').value),
+                    g: parseInt(document.getElementById('complete-target-g').value),
+                    b: parseInt(document.getElementById('complete-target-b').value)
+                };
+
+                const formData = new FormData();
+                for (let file of fileInput.files) {
+                    formData.append('files', file);
+                }
+                formData.append('target_rgb', JSON.stringify(targetRgb));
+
+                const response = await fetch(`${BASE_URL}/complete-paint-mixing`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                showResult('complete-pipeline-result', data, !response.ok);
+            } catch (error) {
+                showError('complete-pipeline-result', error.message);
+            }
+        }
+
+        // Test pipeline status on page load
+        window.onload = function() {
+            testPipelineStatus();
+        };
+    </script>
+</body>
+</html>

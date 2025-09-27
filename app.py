@@ -1,7 +1,10 @@
 
 from flask import Flask, request, jsonify
-from agent.agent import get_project_info, calculate_shade_percentage
-from agent.image_converter_agent import convert_image_to_png
+from agent.parent_agent import get_project_info
+from agent.calculations_agent import calculations_agent
+from agent.image_converter_agent import convert_image_to_png, image_converter_agent
+from agent.parent_agent import parent_agent
+from agent.rgb_scanner_agent import rgb_scanner_agent
 from google.cloud import vision
 import os
 from werkzeug.utils import secure_filename
@@ -50,7 +53,9 @@ def shade_percentage():
     print(f"Received data: {data}")  # Debug log
     light_value = data.get("light_value", 0)
     max_light = data.get("max_light", 100.0)
-    return jsonify(calculate_shade_percentage(light_value, max_light))
+    # Use the calculations agent for shade percentage
+    result = calculations_agent.tools[2](light_value, max_light)  # calculate_shade_percentage
+    return jsonify(result)
 
 @app.route('/test-vision', methods=['POST'])
 def test_vision():
@@ -237,6 +242,7 @@ def rgb_to_cmyk(r, g, b):
 
 @app.route('/rgbToRatio', methods=['POST'])
 def rgbToRatio():
+    """Calculate paint mixing ratios using the Calculations Agent."""
     try:
         # Get input data
         data = request.json
@@ -246,57 +252,254 @@ def rgbToRatio():
         if not target_rgb or not user_colors or len(user_colors) > 3:
             return jsonify({"error": "Invalid input. Provide target_rgb and up to 3 user_colors."}), 400
 
-        # Normalize target RGB values
-        target_r, target_g, target_b = target_rgb["r"], target_rgb["g"], target_rgb["b"]
-
-        # Generate permutations of ratios (e.g., [0.5, 0.3, 0.2])
-        ratios = [0.1 * i for i in range(11)]  # Generate ratios from 0.0 to 1.0 in steps of 0.1
-        permutations_of_ratios = [p for p in permutations(ratios, len(user_colors)) if sum(p) == 1.0]
-
-        closest_match = None
-        min_distance = float("inf")
-
-        # Iterate through permutations of ratios
-        for ratio_set in permutations_of_ratios:
-            mixed_r, mixed_g, mixed_b = 0, 0, 0
-
-            # Mix colors based on ratios
-            for i, ratio in enumerate(ratio_set):
-                mixed_r += user_colors[i]["r"] * ratio
-                mixed_g += user_colors[i]["g"] * ratio
-                mixed_b += user_colors[i]["b"] * ratio
-
-            # Calculate Euclidean distance to target RGB
-            distance = math.sqrt((mixed_r - target_r) ** 2 + (mixed_g - target_g) ** 2 + (mixed_b - target_b) ** 2)
-
-            # Update closest match
-            if distance < min_distance:
-                min_distance = distance
-                closest_match = {
-                    "ratios": ratio_set,
-                    "mixed_rgb": { "r": int(mixed_r), "g": int(mixed_g), "b": int(mixed_b) },
-                    "distance": distance
-                }
-
-        # Convert target RGB and mixed RGB to CMYK
-        target_cmyk = rgb_to_cmyk(target_r, target_g, target_b)
-        mixed_cmyk = rgb_to_cmyk(closest_match["mixed_rgb"]["r"], closest_match["mixed_rgb"]["g"], closest_match["mixed_rgb"]["b"])
-
-        # Return the closest match with CMYK values
-        return jsonify({
-            "success": True,
-            "target_rgb": target_rgb,
-            "target_cmyk": target_cmyk,
-            "closest_match": {
-                "ratios": closest_match["ratios"],
-                "mixed_rgb": closest_match["mixed_rgb"],
-                "mixed_cmyk": mixed_cmyk,
-                "distance": closest_match["distance"]
-            }
-        })
+        # Use the Calculations Agent for paint mixing
+        result = calculations_agent.tools[1](target_rgb, user_colors)  # calculate_color_mix_ratios
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
     except Exception as e:
         print(f"Error: {e}")  # Log the error
         return jsonify({"error": str(e)}), 500
 
+@app.route('/complete-paint-mixing', methods=['POST'])
+def complete_paint_mixing():
+    """Complete paint mixing pipeline: Image Converter → RGB Scanner → Calculations → Results."""
+    try:
+        # Check if files are uploaded
+        if 'files' not in request.files:
+            return jsonify({"error": "No files uploaded"}), 400
+        
+        files = request.files.getlist('files')
+        if not files or files[0].filename == '':
+            return jsonify({"error": "No files selected"}), 400
+        
+        # Get target RGB from form data
+        target_rgb_str = request.form.get('target_rgb')
+        if not target_rgb_str:
+            return jsonify({"error": "target_rgb is required"}), 400
+        
+        try:
+            import json
+            target_rgb = json.loads(target_rgb_str)
+        except json.JSONDecodeError:
+            return jsonify({"error": "Invalid target_rgb format. Use JSON: {\"r\": 128, \"g\": 64, \"b\": 192}"}), 400
+        
+        # Validate target RGB
+        if not all(key in target_rgb for key in ["r", "g", "b"]):
+            return jsonify({"error": "target_rgb must contain r, g, b values"}), 400
+        
+        # Save uploaded files
+        image_paths = []
+        for file in files:
+            if file and allowed_file(file.filename):
+                # Generate unique filename
+                input_filename = secure_filename(file.filename)
+                input_name, input_ext = os.path.splitext(input_filename)
+                unique_filename = f"{input_name}_{uuid.uuid4().hex[:8]}{input_ext}"
+                file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+                
+                file.save(file_path)
+                image_paths.append(file_path)
+        
+        if not image_paths:
+            return jsonify({"error": "No valid image files uploaded"}), 400
+        
+        # Use the complete paint mixing pipeline
+        result = parent_agent.tools[3](image_paths, target_rgb)  # process_complete_paint_mixing_pipeline
+        
+        # Clean up uploaded files
+        for path in image_paths:
+            if os.path.exists(path):
+                os.remove(path)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        # Clean up files on error
+        if 'image_paths' in locals():
+            for path in image_paths:
+                if os.path.exists(path):
+                    os.remove(path)
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/rgb-to-cmyk', methods=['POST'])
+def rgb_to_cmyk_endpoint():
+    """Convert RGB to CMYK using the Calculations Agent."""
+    try:
+        data = request.json
+        r = data.get("r")
+        g = data.get("g")
+        b = data.get("b")
+        
+        if r is None or g is None or b is None:
+            return jsonify({"error": "r, g, b values are required"}), 400
+        
+        # Use the Calculations Agent
+        result = calculations_agent.tools[0](r, g, b)  # rgb_to_cmyk
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/scan-rgb-from-images', methods=['POST'])
+def scan_rgb_from_images():
+    """Scan RGB values from multiple images using the RGB Scanner Agent."""
+    try:
+        # Check if files are uploaded
+        if 'files' not in request.files:
+            return jsonify({"error": "No files uploaded"}), 400
+        
+        files = request.files.getlist('files')
+        if not files or files[0].filename == '':
+            return jsonify({"error": "No files selected"}), 400
+        
+        # Save uploaded files
+        image_paths = []
+        for file in files:
+            if file and allowed_file(file.filename):
+                # Generate unique filename
+                input_filename = secure_filename(file.filename)
+                input_name, input_ext = os.path.splitext(input_filename)
+                unique_filename = f"{input_name}_{uuid.uuid4().hex[:8]}{input_ext}"
+                file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+                
+                file.save(file_path)
+                image_paths.append(file_path)
+        
+        if not image_paths:
+            return jsonify({"error": "No valid image files uploaded"}), 400
+        
+        # Use the RGB Scanner Agent
+        result = rgb_scanner_agent.tools[1](image_paths)  # scan_rgb_from_multiple_images
+        
+        # Clean up uploaded files
+        for path in image_paths:
+            if os.path.exists(path):
+                os.remove(path)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        # Clean up files on error
+        if 'image_paths' in locals():
+            for path in image_paths:
+                if os.path.exists(path):
+                    os.remove(path)
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/convert-multiple-images', methods=['POST'])
+def convert_multiple_images():
+    """Convert multiple images to PNG using the Image Converter Agent."""
+    try:
+        # Check if files are uploaded
+        if 'files' not in request.files:
+            return jsonify({"error": "No files uploaded"}), 400
+        
+        files = request.files.getlist('files')
+        if not files or files[0].filename == '':
+            return jsonify({"error": "No files selected"}), 400
+        
+        # Save uploaded files
+        image_paths = []
+        for file in files:
+            if file and allowed_file(file.filename):
+                # Generate unique filename
+                input_filename = secure_filename(file.filename)
+                input_name, input_ext = os.path.splitext(input_filename)
+                unique_filename = f"{input_name}_{uuid.uuid4().hex[:8]}{input_ext}"
+                file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+                
+                file.save(file_path)
+                image_paths.append(file_path)
+        
+        if not image_paths:
+            return jsonify({"error": "No valid image files uploaded"}), 400
+        
+        # Use the Image Converter Agent
+        result = image_converter_agent.tools[4](image_paths)  # convert_multiple_images_to_png
+        
+        # Clean up uploaded files
+        for path in image_paths:
+            if os.path.exists(path):
+                os.remove(path)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        # Clean up files on error
+        if 'image_paths' in locals():
+            for path in image_paths:
+                if os.path.exists(path):
+                    os.remove(path)
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/pipeline-status', methods=['GET'])
+def pipeline_status():
+    """Get the status of all pipeline components."""
+    try:
+        status = {
+            "success": True,
+            "pipeline_components": {
+                "image_converter_agent": {
+                    "status": "active",
+                    "tools": len(image_converter_agent.tools),
+                    "description": "Converts images to PNG format"
+                },
+                "rgb_scanner_agent": {
+                    "status": "active", 
+                    "tools": len(rgb_scanner_agent.tools),
+                    "description": "Extracts RGB values using Google Cloud Vision"
+                },
+                "calculations_agent": {
+                    "status": "active",
+                    "tools": len(calculations_agent.tools),
+                    "description": "Performs color calculations and paint mixing"
+                },
+                "parent_agent": {
+                    "status": "active",
+                    "tools": len(parent_agent.tools),
+                    "description": "Orchestrates the complete pipeline"
+                }
+            },
+            "available_endpoints": [
+                "/complete-paint-mixing",
+                "/rgb-to-cmyk", 
+                "/scan-rgb-from-images",
+                "/convert-multiple-images",
+                "/rgbToRatio",
+                "/convert-to-png",
+                "/test-vision"
+            ],
+            "message": "All pipeline components are operational"
+        }
+        
+        return jsonify(status)
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    import os
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
