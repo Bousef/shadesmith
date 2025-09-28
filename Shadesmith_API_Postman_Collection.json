@@ -358,6 +358,52 @@
         "description": "List all available converted PNG files (no parameters needed)"
       },
       "response": []
+    },
+    {
+      "name": "Save Mixed Color to Inventory",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"HjW9diTxZWR4ivs0kSuBOAiAfOt1\",\n  \"mixed_color_data\": {\n    \"name\": \"Custom Pink\",\n    \"rgb\": {\"r\": 255, \"g\": 192, \"b\": 203},\n    \"hex\": \"#FFC0CB\",\n    \"cmyk\": {\"c\": 0, \"m\": 25, \"y\": 20, \"k\": 0},\n    \"source_colors\": [\n      {\"r\": 255, \"g\": 0, \"b\": 0},\n      {\"r\": 255, \"g\": 255, \"b\": 255}\n    ],\n    \"mixing_ratios\": [0.2, 0.8],\n    \"target_rgb\": {\"r\": 255, \"g\": 192, \"b\": 203},\n    \"accuracy\": {\n      \"distance\": 12.04,\n      \"level\": \"Good\"\n    },\n    \"tags\": [\"pink\", \"custom\", \"mixed\"]\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/save-mixed-color",
+          "host": ["{{base_url}}"],
+          "path": ["save-mixed-color"]
+        },
+        "description": "Save a mixed color to user's inventory with source colors, mixing ratios, and accuracy data"
+      },
+      "response": []
+    },
+    {
+      "name": "Save Recipe to Inventory",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"HjW9diTxZWR4ivs0kSuBOAiAfOt1\",\n  \"recipe_data\": {\n    \"name\": \"Pink Recipe\",\n    \"source_colors\": [\n      {\"r\": 255, \"g\": 0, \"b\": 0},\n      {\"r\": 255, \"g\": 255, \"b\": 255}\n    ],\n    \"mixing_ratios\": [0.2, 0.8],\n    \"target_rgb\": {\"r\": 255, \"g\": 192, \"b\": 203},\n    \"target_cmyk\": {\"c\": 0, \"m\": 25, \"y\": 20, \"k\": 0},\n    \"result_rgb\": {\"r\": 254, \"g\": 204, \"b\": 204},\n    \"accuracy\": {\n      \"distance\": 12.04,\n      \"level\": \"Good\"\n    },\n    \"instructions\": [\n      \"Mix 20% red paint\",\n      \"Mix 80% white paint\",\n      \"Stir thoroughly\"\n    ],\n    \"tags\": [\"pink\", \"recipe\", \"custom\"]\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/save-recipe",
+          "host": ["{{base_url}}"],
+          "path": ["save-recipe"]
+        },
+        "description": "Save a paint mixing recipe to user's inventory with step-by-step instructions"
+      },
+      "response": []
     }
   ]
 }
