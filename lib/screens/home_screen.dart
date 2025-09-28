@@ -7,8 +7,10 @@ import '../services/inventory_service.dart';
 import '../services/recipe_service.dart';
 import '../models/inventory_model.dart';
 import '../models/recipe_model.dart';
+import '../models/color_model.dart';
 import 'capture_screen.dart';
 import 'color_pick_screen.dart';
+import 'target_lab_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1234,9 +1236,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _selectColor(colorData);
+              _makeColorTarget(colorData);
             },
-            child: const Text('Use Color'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.blue,
+            ),
+            child: const Text('Make Target'),
           ),
         ],
       ),
@@ -1288,6 +1293,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       SnackBar(
         content: Text('Selected ${colorData['name']}'),
         duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _makeColorTarget(Map<String, dynamic> colorData) {
+    final flutterColor = colorData['color'] as Color;
+    final targetColor = ColorModel(
+      red: flutterColor.red,
+      green: flutterColor.green,
+      blue: flutterColor.blue,
+    );
+    
+    // Navigate to target lab screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TargetLabScreen(targetColor: targetColor),
       ),
     );
   }
