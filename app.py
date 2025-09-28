@@ -5,6 +5,7 @@ from agent.calculations_agent import calculations_agent
 from agent.image_converter_agent import convert_image_to_png, image_converter_agent
 from agent.parent_agent import parent_agent
 from agent.rgb_scanner_agent import rgb_scanner_agent
+from agent.inspiration_agent import Inspiration_agent
 from google.cloud import vision
 import os
 from werkzeug.utils import secure_filename
@@ -582,6 +583,17 @@ def convert_multiple_images():
         print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/generate-color-inspiration', methods=['GET'])
+def generate_color_inspiration():
+    """Generate 10 new colors by mixing 2-3 unique colors from a hardcoded palette."""
+    try:
+        # Use the inspiration agent to generate mixed colors
+        result = Inspiration_agent.tools[3]()  # calculate_random_color_mix_ratios
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/pipeline-status', methods=['GET'])
 def pipeline_status():
     """Get the status of all pipeline components."""
@@ -608,6 +620,11 @@ def pipeline_status():
                     "status": "active",
                     "tools": len(parent_agent.tools),
                     "description": "Orchestrates the complete pipeline"
+                },
+                "inspiration_agent": {
+                    "status": "active",
+                    "tools": len(Inspiration_agent.tools),
+                    "description": "Generates color inspiration by mixing hardcoded colors"
                 }
             },
             "available_endpoints": [
@@ -618,7 +635,8 @@ def pipeline_status():
                 "/convert-multiple-images",
                 "/rgbToRatio",
                 "/convert-to-png",
-                "/test-vision"
+                "/test-vision",
+                "/generate-color-inspiration"
             ],
             "message": "All pipeline components are operational"
         }
