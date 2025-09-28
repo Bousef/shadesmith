@@ -329,6 +329,135 @@ def complete_paint_mixing():
         print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
+def suggest_additional_colors(target_rgb, user_colors):
+    """Suggest additional colors needed to achieve the target color."""
+    suggestions = []
+    
+    # Analyze what's missing
+    target_r, target_g, target_b = target_rgb["r"], target_rgb["g"], target_rgb["b"]
+    
+    # Get current color ranges
+    min_r = min(color["r"] for color in user_colors)
+    max_r = max(color["r"] for color in user_colors)
+    min_g = min(color["g"] for color in user_colors)
+    max_g = max(color["g"] for color in user_colors)
+    min_b = min(color["b"] for color in user_colors)
+    max_b = max(color["b"] for color in user_colors)
+    
+    # Check what's missing
+    if target_r < min_r:
+        suggestions.append({
+            "color": "red",
+            "rgb": {"r": 0, "g": 0, "b": 0},
+            "reason": f"Need lower red values (target: {target_r}, available: {min_r}-{max_r})"
+        })
+    if target_r > max_r:
+        suggestions.append({
+            "color": "red",
+            "rgb": {"r": 255, "g": 0, "b": 0},
+            "reason": f"Need higher red values (target: {target_r}, available: {min_r}-{max_r})"
+        })
+    
+    if target_g < min_g:
+        suggestions.append({
+            "color": "green", 
+            "rgb": {"r": 0, "g": 0, "b": 0},
+            "reason": f"Need lower green values (target: {target_g}, available: {min_g}-{max_g})"
+        })
+    if target_g > max_g:
+        suggestions.append({
+            "color": "green",
+            "rgb": {"r": 0, "g": 255, "b": 0},
+            "reason": f"Need higher green values (target: {target_g}, available: {min_g}-{max_g})"
+        })
+        
+    if target_b < min_b:
+        suggestions.append({
+            "color": "blue",
+            "rgb": {"r": 0, "g": 0, "b": 0},
+            "reason": f"Need lower blue values (target: {target_b}, available: {min_b}-{max_b})"
+        })
+    if target_b > max_b:
+        suggestions.append({
+            "color": "blue",
+            "rgb": {"r": 0, "g": 0, "b": 255},
+            "reason": f"Need higher blue values (target: {target_b}, available: {min_b}-{max_b})"
+        })
+    
+    return suggestions
+
+@app.route('/rgb-paint-mixing', methods=['POST'])
+def rgb_paint_mixing():
+    """Direct RGB paint mixing pipeline: RGB values → Calculations → Results (no images needed)."""
+    try:
+        # Get JSON data from request
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        # Extract user colors and target RGB
+        user_colors = data.get("user_colors")  # List of RGB objects
+        target_rgb = data.get("target_rgb")  # Target color RGB object
+        
+        # Validate input
+        if not target_rgb or not user_colors or len(user_colors) > 3:
+            return jsonify({"error": "Invalid input. Provide target_rgb and up to 3 user_colors."}), 400
+        
+        # Validate target RGB structure
+        if not all(key in target_rgb for key in ["r", "g", "b"]):
+            return jsonify({"error": "target_rgb must contain r, g, b values"}), 400
+        
+        # Validate user colors structure
+        for i, color in enumerate(user_colors):
+            if not all(key in color for key in ["r", "g", "b"]):
+                return jsonify({"error": f"user_colors[{i}] must contain r, g, b values"}), 400
+        
+        # Use the Calculations Agent directly for RGB mixing
+        result = calculations_agent.tools[1](target_rgb, user_colors)  # calculate_color_mix_ratios
+        
+        if result.get('success'):
+            # Check if the result is close enough to be practical
+            distance = result["closest_match"]["distance"]
+            accuracy_threshold = 50  # Adjustable threshold
+            
+            # Add color suggestions if accuracy is poor
+            color_suggestions = []
+            if distance > accuracy_threshold:
+                color_suggestions = suggest_additional_colors(target_rgb, user_colors)
+            
+            # Add additional metadata for consistency with complete pipeline
+            enhanced_result = {
+                "success": True,
+                "message": "Successfully calculated RGB paint mixing ratios",
+                "target_rgb": result["target_rgb"],
+                "target_cmyk": result["target_cmyk"],
+                "user_colors": user_colors,
+                "user_colors_count": len(user_colors),
+                "closest_match": result["closest_match"],
+                "pipeline_type": "rgb_direct",
+                "accuracy_analysis": {
+                    "distance": distance,
+                    "is_achievable": distance <= accuracy_threshold,
+                    "accuracy_level": "Excellent" if distance <= 10 else "Good" if distance <= 30 else "Fair" if distance <= 50 else "Poor"
+                },
+                "color_suggestions": color_suggestions,
+                "processing_steps": [
+                    {
+                        "step": 1,
+                        "agent": "calculations_agent",
+                        "action": "calculate_color_mix_ratios",
+                        "input": {"target_rgb": target_rgb, "user_colors": user_colors}
+                    }
+                ]
+            }
+            return jsonify(enhanced_result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        print(f"Error: {e}")  # Log the error
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/rgb-to-cmyk', methods=['POST'])
 def rgb_to_cmyk_endpoint():
     """Convert RGB to CMYK using the Calculations Agent."""
@@ -483,6 +612,7 @@ def pipeline_status():
             },
             "available_endpoints": [
                 "/complete-paint-mixing",
+                "/rgb-paint-mixing",
                 "/rgb-to-cmyk", 
                 "/scan-rgb-from-images",
                 "/convert-multiple-images",
