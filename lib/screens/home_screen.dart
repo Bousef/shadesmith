@@ -19,17 +19,31 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late TabController _tabController;
+  int _refreshKey = 0; // Add refresh key to force rebuild
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      // Refresh data when switching to inventory or logs tabs
+      if (_tabController.index == 1 || _tabController.index == 2) {
+        _refreshData();
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // Method to refresh data
+  void _refreshData() {
+    setState(() {
+      _refreshKey++;
+    });
   }
 
   @override
@@ -1351,22 +1365,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   // Navigation methods
-  void _showCameraCapture() {
-    Navigator.push(
+  void _showCameraCapture() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const CaptureScreen(),
       ),
     );
+    // Refresh data when returning from capture screen
+    _refreshData();
   }
 
-  void _showRGBInput() {
-    Navigator.push(
+  void _showRGBInput() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const ColorPickScreen(),
       ),
     );
+    // Refresh data when returning from color pick screen
+    _refreshData();
   }
 
   void _showAddColorDialog() {
@@ -1383,6 +1401,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildInventoryPalette() {
     return FutureBuilder<InventoryModel>(
+      key: ValueKey('inventory_$_refreshKey'),
       future: InventoryService.getInventory(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -1464,6 +1483,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildRecipesList() {
     return FutureBuilder<List<RecipeModel>>(
+      key: ValueKey('recipes_$_refreshKey'),
       future: RecipeService.getAllRecipes(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
