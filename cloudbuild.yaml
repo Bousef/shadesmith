@@ -1,27 +1,16 @@
 steps:
-# Build container image with Buildpacks
-- name: 'gcr.io/k8s-skaffold/pack'
-  args:
-  - build
-  - gcr.io/$PROJECT_ID/shadesmith
-  - --builder=gcr.io/buildpacks/builder
-
-# Push image
-- name: 'gcr.io/cloud-builders/docker'
-  args:
-  - push
-  - gcr.io/$PROJECT_ID/shadesmith
-
-# Deploy
 - name: 'gcr.io/cloud-builders/gcloud'
   args:
   - run
   - deploy
-  - shadesmith
-  - --image
-  - gcr.io/$PROJECT_ID/shadesmith
+  - shadesmith-backend
+  - --source
+  - .
   - --region
   - us-east1
   - --platform
   - managed
   - --allow-unauthenticated
+
+options:
+  logging: CLOUD_LOGGING_ONLY
