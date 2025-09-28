@@ -1,7 +1,5 @@
 Flask
 google-cloud-vision
-google-cloud-firestore
-firebase-admin
 werkzeug
 pillow
 gunicorn

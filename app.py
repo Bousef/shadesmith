@@ -892,11 +892,6 @@ def pipeline_status():
                     "tools": len(parent_agent.tools),
                     "description": "Orchestrates the complete pipeline"
                 },
-                "database_agent": {
-                    "status": "active",
-                    "tools": len(database_agent.tools),
-                    "description": "Handles Firebase Firestore operations for color data"
-
                 "inspiration_agent": {
                     "status": "active",
                     "tools": len(Inspiration_agent.tools),
@@ -923,7 +918,7 @@ def pipeline_status():
                 "/delete-color/<user_id>/<color_id>",
                 "/get-color/<user_id>/<color_id>",
                 "/get-mixing-result/<user_id>/<mixing_id>",
-                "/delete-mixing-result/<user_id>/<mixing_id>"
+                "/delete-mixing-result/<user_id>/<mixing_id>",
                 "/generate-color-inspiration"
             ],
             "message": "All pipeline components are operational"
