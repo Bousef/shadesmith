@@ -128,6 +128,16 @@ class InventoryService {
     return sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
   }
 
+  // Clear all inventory data (for logout)
+  static Future<void> clearInventory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_inventoryKey);
+    } catch (e) {
+      print('Error clearing inventory: $e');
+    }
+  }
+
   // Save inventory to local storage
   static Future<void> _saveInventory(InventoryModel inventory) async {
     final prefs = await SharedPreferences.getInstance();

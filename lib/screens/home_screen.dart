@@ -1669,12 +1669,31 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           const SizedBox(height: 4),
           ...recipe.ingredients.map((ingredient) => Padding(
             padding: const EdgeInsets.only(left: 8, bottom: 2),
-            child: Text(
-              '• ${ingredient.name}: ${ingredient.percentage.toStringAsFixed(1)}%',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: Colors.white70,
-              ),
+            child: Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: ingredient.color.toFlutterColor(),
+                    borderRadius: BorderRadius.circular(2),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${ingredient.name} (${ingredient.color.red}, ${ingredient.color.green}, ${ingredient.color.blue}): ${ingredient.percentage.toStringAsFixed(1)}%',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ],
             ),
           )),
         ],

@@ -747,6 +747,7 @@ class _TargetLabScreenState extends State<TargetLabScreen> {
         final recipe = RecipeService.createRecipeFromApiResponse(
           apiResponse: result,
           targetColor: widget.targetColor,
+          selectedColors: _selectedColors,
         );
         
         setState(() {

@@ -56,11 +56,22 @@ class RecipeService {
     }
   }
 
+  // Clear all recipe data (for logout)
+  static Future<void> clearRecipes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_recipesKey);
+    } catch (e) {
+      print('Error clearing recipes: $e');
+    }
+  }
+
   // Create recipe from API response
   static RecipeModel createRecipeFromApiResponse({
     required Map<String, dynamic> apiResponse,
     required ColorModel targetColor,
     List<Map<String, int>>? userColors, // Optional - can be extracted from response
+    List<dynamic>? selectedColors, // Optional - selected colors with names from inventory
   }) {
     try {
       // Handle /rgb-paint-mixing API response structure (from API documentation)
@@ -75,14 +86,28 @@ class RecipeService {
           final colorData = responseUserColors[i];
           final ratio = (ratios[i] as num).toDouble();
           
+          final colorModel = ColorModel(
+            red: colorData['r'] as int,
+            green: colorData['g'] as int,
+            blue: colorData['b'] as int,
+          );
+          
+          // Use actual color name from selected colors if available, otherwise use hex
+          String colorName = colorModel.hex;
+          if (selectedColors != null && i < selectedColors.length) {
+            try {
+              final selectedColor = selectedColors[i] as BaseColor;
+              colorName = selectedColor.name;
+            } catch (e) {
+              // If casting fails, keep the hex name
+              colorName = colorModel.hex;
+            }
+          }
+          
           ingredients.add(ColorMix(
-            color: ColorModel(
-              red: colorData['r'] as int,
-              green: colorData['g'] as int,
-              blue: colorData['b'] as int,
-            ),
+            color: colorModel,
             percentage: ratio * 100,
-            name: 'Color ${i + 1}',
+            name: colorName,
           ));
         }
         
@@ -106,14 +131,28 @@ class RecipeService {
           final colorData = userColors[i];
           final ratio = (ratios[i] as num).toDouble();
           
+          final colorModel = ColorModel(
+            red: colorData['r'] as int,
+            green: colorData['g'] as int,
+            blue: colorData['b'] as int,
+          );
+          
+          // Use actual color name from selected colors if available, otherwise use hex
+          String colorName = colorModel.hex;
+          if (selectedColors != null && i < selectedColors.length) {
+            try {
+              final selectedColor = selectedColors[i] as BaseColor;
+              colorName = selectedColor.name;
+            } catch (e) {
+              // If casting fails, keep the hex name
+              colorName = colorModel.hex;
+            }
+          }
+          
           ingredients.add(ColorMix(
-            color: ColorModel(
-              red: colorData['r'] as int,
-              green: colorData['g'] as int,
-              blue: colorData['b'] as int,
-            ),
+            color: colorModel,
             percentage: ratio * 100,
-            name: 'Color ${i + 1}',
+            name: colorName,
           ));
         }
         
