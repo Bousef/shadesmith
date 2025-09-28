@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/app_auth_provider.dart';
+import '../services/inventory_service.dart';
+import '../services/recipe_service.dart';
+import '../models/inventory_model.dart';
+import '../models/recipe_model.dart';
+import '../models/color_model.dart';
+import 'capture_screen.dart';
+import 'color_pick_screen.dart';
+import 'target_lab_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,17 +21,31 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late TabController _tabController;
+  int _refreshKey = 0; // Add refresh key to force rebuild
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      // Refresh data when switching to inventory or logs tabs
+      if (_tabController.index == 1 || _tabController.index == 2) {
+        _refreshData();
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // Method to refresh data
+  void _refreshData() {
+    setState(() {
+      _refreshKey++;
+    });
   }
 
   @override
@@ -361,6 +383,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Text(
+                'Color Inventory',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
               IconButton(
                 onPressed: () => _showAddColorDialog(),
                 icon: const Icon(Icons.add, color: Colors.white),
@@ -375,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         
         // Paint Palette Layout
         Expanded(
-          child: _buildPaintPalette(),
+          child: _buildInventoryPalette(),
         ),
       ],
     );
@@ -388,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Color Formula Logs',
+            'Paint Mixing Recipes',
             style: GoogleFonts.playfairDisplay(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -399,7 +429,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         
         // Logs List
         Expanded(
-          child: _buildLogsList(),
+          child: _buildRecipesList(),
         ),
       ],
     );
@@ -1206,9 +1236,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _selectColor(colorData);
+              _makeColorTarget(colorData);
             },
-            child: const Text('Use Color'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.blue,
+            ),
+            child: const Text('Make Target'),
           ),
         ],
       ),
@@ -1260,6 +1293,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       SnackBar(
         content: Text('Selected ${colorData['name']}'),
         duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _makeColorTarget(Map<String, dynamic> colorData) {
+    final flutterColor = colorData['color'] as Color;
+    final targetColor = ColorModel(
+      red: flutterColor.red,
+      green: flutterColor.green,
+      blue: flutterColor.blue,
+    );
+    
+    // Navigate to target lab screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TargetLabScreen(targetColor: targetColor),
       ),
     );
   }
@@ -1336,41 +1386,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // Mock methods
-  void _showCameraCapture() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Camera capture coming soon!')),
-    );
-  }
-
-  void _showRGBInput() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Enter RGB Code'),
-        content: const TextField(
-          decoration: InputDecoration(
-            hintText: 'e.g., 255, 128, 64',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('RGB input coming soon!')),
-              );
-            },
-            child: const Text('Add'),
-          ),
-        ],
+  // Navigation methods
+  void _showCameraCapture() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CaptureScreen(),
       ),
     );
+    // Refresh data when returning from capture screen
+    _refreshData();
+  }
+
+  void _showRGBInput() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ColorPickScreen(),
+      ),
+    );
+    // Refresh data when returning from color pick screen
+    _refreshData();
   }
 
   void _showAddColorDialog() {
@@ -1383,5 +1419,300 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Restoring ${log['name']} to inventory...')),
     );
+  }
+
+  Widget _buildInventoryPalette() {
+    return FutureBuilder<InventoryModel>(
+      key: ValueKey('inventory_$_refreshKey'),
+      future: InventoryService.getInventory(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading inventory: ${snapshot.error}',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          );
+        }
+
+        final inventory = snapshot.data ?? InventoryModel.defaultInventory();
+        final availableColors = inventory.availableColors.where((color) => color.isAvailable).toList();
+
+        if (availableColors.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.palette_outlined,
+                  size: 60,
+                  color: Colors.white.withOpacity(0.6),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No colors in inventory',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Capture or pick colors to get started',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: Colors.white54,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 1.1,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemCount: availableColors.length,
+            itemBuilder: (context, index) {
+              final colorData = {
+                'name': availableColors[index].name,
+                'color': availableColors[index].color.toFlutterColor(),
+              };
+              return _buildColorCard(colorData, index);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecipesList() {
+    return FutureBuilder<List<RecipeModel>>(
+      key: ValueKey('recipes_$_refreshKey'),
+      future: RecipeService.getAllRecipes(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading recipes: ${snapshot.error}',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          );
+        }
+
+        final recipes = snapshot.data ?? [];
+
+        if (recipes.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.science_outlined,
+                  size: 60,
+                  color: Colors.white.withOpacity(0.6),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No recipes yet',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Create your first paint mixing recipe',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: Colors.white54,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Sort recipes by creation date (newest first)
+        recipes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ListView.builder(
+            itemCount: recipes.length,
+            itemBuilder: (context, index) {
+              final recipe = recipes[index];
+              return _buildRecipeCard(recipe);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecipeCard(RecipeModel recipe) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Recipe Header
+          Row(
+            children: [
+              // Target Color
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: recipe.targetColor.toFlutterColor(),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Target: ${recipe.targetColor.hex}',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Created: ${_formatDate(recipe.createdAt)}',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Accuracy Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: recipe.accuracy <= 10 
+                    ? Colors.green.withOpacity(0.8)
+                    : recipe.accuracy <= 30
+                      ? Colors.blue.withOpacity(0.8)
+                      : Colors.orange.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'ΔE: ${recipe.accuracy.toStringAsFixed(1)}',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Ingredients
+          Text(
+            'Ingredients:',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          ...recipe.ingredients.map((ingredient) => Padding(
+            padding: const EdgeInsets.only(left: 8, bottom: 2),
+            child: Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: ingredient.color.toFlutterColor(),
+                    borderRadius: BorderRadius.circular(2),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${ingredient.name} (${ingredient.color.red}, ${ingredient.color.green}, ${ingredient.color.blue}): ${ingredient.percentage.toStringAsFixed(1)}%',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
   }
 }

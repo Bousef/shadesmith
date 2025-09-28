@@ -2,6 +2,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'auth_service.dart';
+import 'inventory_service.dart';
+import 'recipe_service.dart';
 
 class AppAuthProvider with ChangeNotifier {
   final AuthService _authService;
@@ -127,6 +129,12 @@ class AppAuthProvider with ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
+
+      // Clear local data before signing out
+      await Future.wait([
+        InventoryService.clearInventory(),
+        RecipeService.clearRecipes(),
+      ]);
 
       await _authService.signOut();
       _user = null;

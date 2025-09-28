@@ -15,6 +15,7 @@ from agent.database_agent import (
     save_mixed_color_to_inventory,
     save_recipe_to_inventory
 )
+from agent.inspiration_agent import Inspiration_agent
 from google.cloud import vision
 import os
 from werkzeug.utils import secure_filename
@@ -571,7 +572,7 @@ def convert_multiple_images():
             return jsonify({"error": "No valid image files uploaded"}), 400
         
         # Use the Image Converter Agent
-        result = image_converter_agent.tools[4](image_paths)  # convert_multiple_images_to_png
+        result = image_converter_agent.tools[1](image_paths)  # convert_multiple_images_to_png
         
         # Clean up uploaded files
         for path in image_paths:
@@ -853,6 +854,13 @@ def delete_mixing_result(user_id, mixing_id):
             "message": "Database not connected"
         }), 501
             
+@app.route('/generate-color-inspiration', methods=['GET'])
+def generate_color_inspiration():
+    """Generate 10 new colors by mixing 2-3 unique colors from a hardcoded palette."""
+    try:
+        # Use the inspiration agent to generate mixed colors
+        result = Inspiration_agent.tools[3]()  # calculate_random_color_mix_ratios
+        return jsonify(result)
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
@@ -888,6 +896,11 @@ def pipeline_status():
                     "status": "active",
                     "tools": len(database_agent.tools),
                     "description": "Handles Firebase Firestore operations for color data"
+
+                "inspiration_agent": {
+                    "status": "active",
+                    "tools": len(Inspiration_agent.tools),
+                    "description": "Generates color inspiration by mixing hardcoded colors"
                 }
             },
             "available_endpoints": [
@@ -911,6 +924,7 @@ def pipeline_status():
                 "/get-color/<user_id>/<color_id>",
                 "/get-mixing-result/<user_id>/<mixing_id>",
                 "/delete-mixing-result/<user_id>/<mixing_id>"
+                "/generate-color-inspiration"
             ],
             "message": "All pipeline components are operational"
         }
