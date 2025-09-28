@@ -595,6 +595,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
       );
       
       _showSuccessSnackBar('Color added to inventory!');
+      
+      // Navigate back to main page after saving
+      Navigator.pop(context);
     } catch (e) {
       _showErrorSnackBar('Failed to add color to inventory: $e');
     }

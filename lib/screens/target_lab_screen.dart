@@ -771,6 +771,9 @@ class _TargetLabScreenState extends State<TargetLabScreen> {
     try {
       await RecipeService.saveRecipe(_generatedRecipe!);
       _showSuccessSnackBar('Recipe saved successfully!');
+      
+      // Navigate back to main page after saving
+      Navigator.pop(context);
     } catch (e) {
       _showErrorSnackBar('Failed to save recipe: $e');
     }

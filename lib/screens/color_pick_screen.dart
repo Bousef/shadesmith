@@ -71,7 +71,7 @@ class _ColorPickScreenState extends State<ColorPickScreen> {
                       width: 1,
                     ),
                   ),
-                  child: Padding(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
@@ -92,6 +92,9 @@ class _ColorPickScreenState extends State<ColorPickScreen> {
                         
                         // Action Buttons
                         if (_isValidColor) _buildActionButtons(),
+                        
+                        // Add some bottom padding for better scrolling
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -556,6 +559,9 @@ class _ColorPickScreenState extends State<ColorPickScreen> {
           backgroundColor: Colors.green,
         ),
       );
+      
+      // Navigate back to main page after saving
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
