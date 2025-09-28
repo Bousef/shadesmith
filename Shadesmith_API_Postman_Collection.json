@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Shadesmith Multi-Agent Pipeline API",
-    "description": "Complete collection for testing the Shadesmith color analysis and paint mixing API",
+    "description": "Complete collection for testing the Shadesmith color analysis and paint mixing API with enhanced subtractive color theory. Features realistic paint mixing where Blue + Yellow = Green!",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -64,7 +64,7 @@
       "response": []
     },
     {
-      "name": "Paint Mixing Calculation",
+      "name": "Paint Mixing Calculation (Legacy)",
       "request": {
         "method": "POST",
         "header": [
@@ -82,7 +82,76 @@
           "host": ["{{base_url}}"],
           "path": ["rgbToRatio"]
         },
-        "description": "Calculate optimal paint mixing ratios for a target color using RGB values (no files needed)"
+        "description": "Calculate optimal paint mixing ratios for a target color using RGB values (legacy endpoint)"
+      },
+      "response": []
+    },
+    {
+      "name": "RGB Paint Mixing (Enhanced)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_colors\": [\n    {\"r\": 255, \"g\": 255, \"b\": 255},\n    {\"r\": 0, \"g\": 0, \"b\": 255},\n    {\"r\": 255, \"g\": 255, \"b\": 0}\n  ],\n  \"target_rgb\": {\"r\": 0, \"g\": 255, \"b\": 0}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/rgb-paint-mixing",
+          "host": ["{{base_url}}"],
+          "path": ["rgb-paint-mixing"]
+        },
+        "description": "Enhanced paint mixing with realistic subtractive color theory (Blue + Yellow = Green). Includes accuracy analysis and color suggestions."
+      },
+      "response": []
+    },
+    {
+      "name": "RGB Paint Mixing - Lime Green Test",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_colors\": [\n    {\"r\": 255, \"g\": 255, \"b\": 255},\n    {\"r\": 0, \"g\": 0, \"b\": 255},\n    {\"r\": 255, \"g\": 255, \"b\": 0}\n  ],\n  \"target_rgb\": {\"r\": 50, \"g\": 205, \"b\": 50}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/rgb-paint-mixing",
+          "host": ["{{base_url}}"],
+          "path": ["rgb-paint-mixing"]
+        },
+        "description": "Test lime green creation with White + Blue + Yellow using enhanced subtractive mixing"
+      },
+      "response": []
+    },
+    {
+      "name": "RGB Paint Mixing - Pink Creation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_colors\": [\n    {\"r\": 255, \"g\": 0, \"b\": 0},\n    {\"r\": 255, \"g\": 255, \"b\": 255}\n  ],\n  \"target_rgb\": {\"r\": 255, \"g\": 192, \"b\": 203}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/rgb-paint-mixing",
+          "host": ["{{base_url}}"],
+          "path": ["rgb-paint-mixing"]
+        },
+        "description": "Create pink from Red + White using enhanced paint mixing algorithm"
       },
       "response": []
     },
