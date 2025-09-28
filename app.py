@@ -5,6 +5,16 @@ from agent.calculations_agent import calculations_agent
 from agent.image_converter_agent import convert_image_to_png, image_converter_agent
 from agent.parent_agent import parent_agent
 from agent.rgb_scanner_agent import rgb_scanner_agent
+# Import database agent functions directly to avoid initialization issues
+from agent.database_agent import (
+    create_user_profile, 
+    save_color_to_inventory, 
+    get_user_inventory,
+    save_mixing_result,
+    get_mixing_history,
+    save_mixed_color_to_inventory,
+    save_recipe_to_inventory
+)
 from agent.inspiration_agent import Inspiration_agent
 from google.cloud import vision
 import os
@@ -583,6 +593,267 @@ def convert_multiple_images():
         print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
+# Database endpoints
+@app.route('/save-color', methods=['POST'])
+def save_color():
+    """Save a color to user's inventory"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        user_id = data.get('user_id')
+        color_data = data.get('color_data')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+            
+        if not color_data:
+            return jsonify({"error": "color_data is required"}), 400
+        
+        # Use database agent function directly
+        result = save_color_to_inventory(user_id, color_data)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/get-inventory/<user_id>', methods=['GET'])
+def get_inventory(user_id):
+    """Get user's color inventory"""
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        
+        # Use database agent function directly
+        result = get_user_inventory(user_id, limit)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/save-mixing-result', methods=['POST'])
+def save_mixing_result():
+    """Save a paint mixing result to user's history"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        user_id = data.get('user_id')
+        mixing_data = data.get('mixing_data')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+            
+        if not mixing_data:
+            return jsonify({"error": "mixing_data is required"}), 400
+        
+        # Use database agent function directly
+        result = save_mixing_result(user_id, mixing_data)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/get-mixing-history/<user_id>', methods=['GET'])
+def get_mixing_history(user_id):
+    """Get user's mixing history"""
+    try:
+        limit = request.args.get('limit', 20, type=int)
+        
+        # Use database agent function directly
+        result = get_mixing_history(user_id, limit)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/save-mixed-color', methods=['POST'])
+def save_mixed_color():
+    """Save a mixed color to user's inventory"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        user_id = data.get('user_id')
+        mixed_color_data = data.get('mixed_color_data')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+            
+        if not mixed_color_data:
+            return jsonify({"error": "mixed_color_data is required"}), 400
+        
+        # Use database agent function directly
+        result = save_mixed_color_to_inventory(user_id, mixed_color_data)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/save-recipe', methods=['POST'])
+def save_recipe():
+    """Save a paint mixing recipe to user's inventory"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        user_id = data.get('user_id')
+        recipe_data = data.get('recipe_data')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+            
+        if not recipe_data:
+            return jsonify({"error": "recipe_data is required"}), 400
+        
+        # Use database agent function directly
+        result = save_recipe_to_inventory(user_id, recipe_data)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/create-user-profile', methods=['POST'])
+def create_user_profile():
+    """Create or update user profile - stores only UID"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        user_id = data.get('user_id')
+        
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+        
+        # Use database agent function directly
+        result = create_user_profile(user_id)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# Additional CRUD endpoints
+@app.route('/update-color/<user_id>/<color_id>', methods=['PUT'])
+def update_color(user_id, color_id):
+    """Update an existing color in user's inventory"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        # For now, we'll delete and recreate the color
+        # In a full implementation, you'd use Firestore's update() method
+        return jsonify({
+            "success": False,
+            "error": "Update functionality requires Firestore connection",
+            "message": "Use delete and create endpoints for now"
+        }), 501
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/delete-color/<user_id>/<color_id>', methods=['DELETE'])
+def delete_color(user_id, color_id):
+    """Delete a color from user's inventory"""
+    try:
+        # This would require Firestore connection
+        return jsonify({
+            "success": False,
+            "error": "Delete functionality requires Firestore connection",
+            "message": "Database not connected"
+        }), 501
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/get-color/<user_id>/<color_id>', methods=['GET'])
+def get_color(user_id, color_id):
+    """Get a specific color by ID"""
+    try:
+        # This would require Firestore connection
+        return jsonify({
+            "success": False,
+            "error": "Get color functionality requires Firestore connection",
+            "message": "Database not connected"
+        }), 501
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/get-mixing-result/<user_id>/<mixing_id>', methods=['GET'])
+def get_mixing_result(user_id, mixing_id):
+    """Get a specific mixing result by ID"""
+    try:
+        # This would require Firestore connection
+        return jsonify({
+            "success": False,
+            "error": "Get mixing result functionality requires Firestore connection",
+            "message": "Database not connected"
+        }), 501
+            
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/delete-mixing-result/<user_id>/<mixing_id>', methods=['DELETE'])
+def delete_mixing_result(user_id, mixing_id):
+    """Delete a mixing result from user's history"""
+    try:
+        # This would require Firestore connection
+        return jsonify({
+            "success": False,
+            "error": "Delete mixing result functionality requires Firestore connection",
+            "message": "Database not connected"
+        }), 501
+            
 @app.route('/generate-color-inspiration', methods=['GET'])
 def generate_color_inspiration():
     """Generate 10 new colors by mixing 2-3 unique colors from a hardcoded palette."""
@@ -621,6 +892,11 @@ def pipeline_status():
                     "tools": len(parent_agent.tools),
                     "description": "Orchestrates the complete pipeline"
                 },
+                "database_agent": {
+                    "status": "active",
+                    "tools": len(database_agent.tools),
+                    "description": "Handles Firebase Firestore operations for color data"
+
                 "inspiration_agent": {
                     "status": "active",
                     "tools": len(Inspiration_agent.tools),
@@ -636,6 +912,18 @@ def pipeline_status():
                 "/rgbToRatio",
                 "/convert-to-png",
                 "/test-vision",
+                "/save-color",
+                "/get-inventory/<user_id>",
+                "/save-mixing-result",
+                "/get-mixing-history/<user_id>",
+                "/save-mixed-color",
+                "/save-recipe",
+                "/create-user-profile",
+                "/update-color/<user_id>/<color_id>",
+                "/delete-color/<user_id>/<color_id>",
+                "/get-color/<user_id>/<color_id>",
+                "/get-mixing-result/<user_id>/<mixing_id>",
+                "/delete-mixing-result/<user_id>/<mixing_id>"
                 "/generate-color-inspiration"
             ],
             "message": "All pipeline components are operational"

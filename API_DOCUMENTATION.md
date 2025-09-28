@@ -315,5 +315,392 @@ No rate limits currently implemented for local development.
 
 ---
 
+---
+
+## Database Endpoints
+
+### 1. Create User Profile
+**POST** `/create-user-profile`
+
+Create a new user profile (stores only UID).
+
+#### Request
+```json
+{
+  "user_id": "user_123"
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "User profile created/updated successfully",
+  "user_id": "user_123",
+  "user_data": {
+    "uid": "user_123",
+    "createdAt": "2024-01-01T00:00:00Z",
+    "lastActive": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+---
+
+### 2. Save Color to Inventory
+**POST** `/save-color`
+
+Save a color to user's inventory.
+
+#### Request
+```json
+{
+  "user_id": "user_123",
+  "color_data": {
+    "name": "Ocean Blue",
+    "rgb": {"r": 0, "g": 119, "b": 190},
+    "hex": "#0077BE",
+    "cmyk": {"c": 100, "m": 37, "y": 0, "k": 25},
+    "source": "manual",
+    "tags": ["blue", "ocean"]
+  }
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Color 'Ocean Blue' saved successfully",
+  "color_id": "color_uuid_123",
+  "color_data": {
+    "id": "color_uuid_123",
+    "name": "Ocean Blue",
+    "type": "color",
+    "rgb": {"r": 0, "g": 119, "b": 190},
+    "hex": "#0077BE",
+    "cmyk": {"c": 100, "m": 37, "y": 0, "k": 25},
+    "addedAt": "2024-01-01T00:00:00Z",
+    "source": "manual",
+    "tags": ["blue", "ocean"]
+  }
+}
+```
+
+---
+
+### 3. Get User Inventory
+**GET** `/get-inventory/<user_id>`
+
+Get all colors from user's inventory.
+
+#### Parameters
+- `limit` (optional): Maximum number of colors to return (default: 50)
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Retrieved 2 colors from inventory",
+  "user_id": "user_123",
+  "colors": [
+    {
+      "id": "color_uuid_123",
+      "name": "Ocean Blue",
+      "type": "color",
+      "rgb": {"r": 0, "g": 119, "b": 190},
+      "hex": "#0077BE",
+      "addedAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "total_colors": 2
+}
+```
+
+---
+
+### 4. Save Mixing Result
+**POST** `/save-mixing-result`
+
+Save a paint mixing result to user's history.
+
+#### Request
+```json
+{
+  "user_id": "user_123",
+  "mixing_data": {
+    "user_colors": [
+      {"r": 0, "g": 119, "b": 190},
+      {"r": 255, "g": 140, "b": 0}
+    ],
+    "target_rgb": {"r": 128, "g": 130, "b": 95},
+    "result_rgb": {"r": 125, "g": 128, "b": 92},
+    "mixing_ratios": [0.6, 0.4],
+    "accuracy": {
+      "distance": 5.2,
+      "level": "Excellent"
+    },
+    "success": true
+  }
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Mixing result saved successfully",
+  "mixing_id": "mixing_uuid_123",
+  "mixing_data": {
+    "id": "mixing_uuid_123",
+    "type": "mixing_result",
+    "user_colors": [
+      {"r": 0, "g": 119, "b": 190},
+      {"r": 255, "g": 140, "b": 0}
+    ],
+    "target_rgb": {"r": 128, "g": 130, "b": 95},
+    "result_rgb": {"r": 125, "g": 128, "b": 92},
+    "mixing_ratios": [0.6, 0.4],
+    "accuracy": {
+      "distance": 5.2,
+      "level": "Excellent"
+    },
+    "createdAt": "2024-01-01T00:00:00Z",
+    "success": true
+  }
+}
+```
+
+---
+
+### 5. Get Mixing History
+**GET** `/get-mixing-history/<user_id>`
+
+Get user's mixing history.
+
+#### Parameters
+- `limit` (optional): Maximum number of results to return (default: 20)
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Retrieved 1 mixing results from history",
+  "user_id": "user_123",
+  "mixing_history": [
+    {
+      "id": "mixing_uuid_123",
+      "type": "mixing_result",
+      "user_colors": [
+        {"r": 0, "g": 119, "b": 190},
+        {"r": 255, "g": 140, "b": 0}
+      ],
+      "target_rgb": {"r": 128, "g": 130, "b": 95},
+      "result_rgb": {"r": 125, "g": 128, "b": 92},
+      "mixing_ratios": [0.6, 0.4],
+      "accuracy": {
+        "distance": 5.2,
+        "level": "Excellent"
+      },
+      "createdAt": "2024-01-01T00:00:00Z",
+      "success": true
+    }
+  ],
+  "total_results": 1
+}
+```
+
+---
+
+### 6. Save Mixed Color to Inventory
+**POST** `/save-mixed-color`
+
+Save a mixed color to user's inventory.
+
+#### Request
+```json
+{
+  "user_id": "user_123",
+  "mixed_color_data": {
+    "name": "Custom Pink",
+    "rgb": {"r": 255, "g": 192, "b": 203},
+    "hex": "#FFC0CB",
+    "cmyk": {"c": 0, "m": 25, "y": 20, "k": 0},
+    "source_colors": [
+      {"r": 255, "g": 0, "b": 0},
+      {"r": 255, "g": 255, "b": 255}
+    ],
+    "mixing_ratios": [0.2, 0.8],
+    "target_rgb": {"r": 255, "g": 192, "b": 203},
+    "accuracy": {
+      "distance": 12.04,
+      "level": "Good"
+    },
+    "tags": ["pink", "custom", "mixed"]
+  }
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Mixed color 'Custom Pink' saved successfully",
+  "mixed_color_id": "mixed_color_uuid_123",
+  "mixed_color_data": {
+    "id": "mixed_color_uuid_123",
+    "name": "Custom Pink",
+    "type": "mixed_color",
+    "rgb": {"r": 255, "g": 192, "b": 203},
+    "hex": "#FFC0CB",
+    "cmyk": {"c": 0, "m": 25, "y": 20, "k": 0},
+    "source_colors": [
+      {"r": 255, "g": 0, "b": 0},
+      {"r": 255, "g": 255, "b": 255}
+    ],
+    "mixing_ratios": [0.2, 0.8],
+    "target_rgb": {"r": 255, "g": 192, "b": 203},
+    "accuracy": {
+      "distance": 12.04,
+      "level": "Good"
+    },
+    "addedAt": "Server Timestamp",
+    "source": "paint_mixing",
+    "tags": ["pink", "custom", "mixed"]
+  }
+}
+```
+
+---
+
+### 7. Save Recipe to Inventory
+**POST** `/save-recipe`
+
+Save a paint mixing recipe to user's inventory.
+
+#### Request
+```json
+{
+  "user_id": "user_123",
+  "recipe_data": {
+    "name": "Pink Recipe",
+    "source_colors": [
+      {"r": 255, "g": 0, "b": 0},
+      {"r": 255, "g": 255, "b": 255}
+    ],
+    "mixing_ratios": [0.2, 0.8],
+    "target_rgb": {"r": 255, "g": 192, "b": 203},
+    "target_cmyk": {"c": 0, "m": 25, "y": 20, "k": 0},
+    "result_rgb": {"r": 254, "g": 204, "b": 204},
+    "accuracy": {
+      "distance": 12.04,
+      "level": "Good"
+    },
+    "instructions": [
+      "Mix 20% red paint",
+      "Mix 80% white paint",
+      "Stir thoroughly"
+    ],
+    "tags": ["pink", "recipe", "custom"]
+  }
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Recipe 'Pink Recipe' saved successfully",
+  "recipe_id": "recipe_uuid_123",
+  "recipe_data": {
+    "id": "recipe_uuid_123",
+    "name": "Pink Recipe",
+    "type": "recipe",
+    "source_colors": [
+      {"r": 255, "g": 0, "b": 0},
+      {"r": 255, "g": 255, "b": 255}
+    ],
+    "mixing_ratios": [0.2, 0.8],
+    "target_rgb": {"r": 255, "g": 192, "b": 203},
+    "target_cmyk": {"c": 0, "m": 25, "y": 20, "k": 0},
+    "result_rgb": {"r": 254, "g": 204, "b": 204},
+    "accuracy": {
+      "distance": 12.04,
+      "level": "Good"
+    },
+    "instructions": [
+      "Mix 20% red paint",
+      "Mix 80% white paint",
+      "Stir thoroughly"
+    ],
+    "addedAt": "Server Timestamp",
+    "source": "paint_mixing",
+    "tags": ["pink", "recipe", "custom"]
+  }
+}
+```
+
+---
+
+### 8. Additional CRUD Endpoints
+**Note**: These endpoints require Firestore database connection to function.
+
+- `GET /get-color/<user_id>/<color_id>` - Get specific color
+- `PUT /update-color/<user_id>/<color_id>` - Update color
+- `DELETE /delete-color/<user_id>/<color_id>` - Delete color
+- `GET /get-mixing-result/<user_id>/<mixing_id>` - Get specific mixing result
+- `DELETE /delete-mixing-result/<user_id>/<mixing_id>` - Delete mixing result
+
+---
+
+## Database Setup
+
+### Firestore Structure
+```
+users/
+  {user_id}/
+    uid: "user_123"
+    createdAt: timestamp
+    lastActive: timestamp
+    
+    inventory/
+      {color_id}/
+        id, name, type, rgb, hex, cmyk, addedAt, source, tags
+      {mixed_color_id}/
+        id, name, type, rgb, hex, cmyk, source_colors, 
+        mixing_ratios, target_rgb, accuracy, addedAt, source, tags
+      {recipe_id}/
+        id, name, type, source_colors, mixing_ratios, 
+        target_rgb, target_cmyk, result_rgb, accuracy, 
+        instructions, addedAt, source, tags
+    
+    mixing_history/
+      {mixing_id}/
+        id, type, user_colors, target_rgb, result_rgb, 
+        mixing_ratios, accuracy, createdAt, success
+```
+
+### Security Rules
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      match /inventory/{itemId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /mixing_history/{mixingId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
+```
+
+---
+
 ## Support
 For issues or questions, please check the pipeline status endpoint first to ensure all components are operational.
