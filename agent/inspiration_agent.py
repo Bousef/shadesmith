@@ -60,28 +60,41 @@ from google.cloud import aiplatform
 def calculate_random_color_mix_ratios():
     """Hardcode 10 colors, mix them uniquely with ratios, and return 10 new color values with RGB, CMYK, and AI-generated names."""
     try:
-        # Set up authentication using the service account key
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "c:/myRepos/shadesmith/keys/shadesmithaimainKey.json"
-
         # Hardcoded list of 10 unique colors (RGB values)
         hardcoded_colors = [
-            {"r": 255, "g": 0, "b": 0},  # Red
-            {"r": 0, "g": 255, "b": 0},  # Green
-            {"r": 0, "g": 0, "b": 255},  # Blue
-            {"r": 255, "g": 255, "b": 0},  # Yellow
-            {"r": 255, "g": 165, "b": 0},  # Orange
-            {"r": 128, "g": 0, "b": 128},  # Purple
-            {"r": 0, "g": 255, "b": 255},  # Cyan
+            {"r": 255, "g": 0, "b": 0},      # Red
+            {"r": 0, "g": 255, "b": 0},      # Green
+            {"r": 0, "g": 0, "b": 255},      # Blue
+            {"r": 255, "g": 255, "b": 0},    # Yellow
+            {"r": 255, "g": 165, "b": 0},    # Orange
+            {"r": 128, "g": 0, "b": 128},    # Purple
+            {"r": 0, "g": 255, "b": 255},    # Cyan
             {"r": 255, "g": 192, "b": 203},  # Pink
             {"r": 128, "g": 128, "b": 128},  # Gray
-            {"r": 0, "g": 0, "b": 0}  # Black
+            {"r": 255, "g": 255, "b": 255}   # White
         ]
 
-        # Ensure no duplicate or self-mixing
+        # Generate 10 new colors by mixing 2-3 unique colors
         generated_colors = []
-        for _ in range(10):  # Generate 10 new colors
+        used_combinations = set()  # Track used color combinations to avoid duplicates
+        
+        for i in range(10):  # Generate exactly 10 new colors
             # Randomly select 2-3 unique colors from the hardcoded list
-            selected_colors = random.sample(hardcoded_colors, random.choice([2, 3]))
+            num_colors = random.choice([2, 3])
+            selected_colors = random.sample(hardcoded_colors, num_colors)
+            
+            # Create a unique identifier for this combination
+            color_ids = tuple(sorted([(c["r"], c["g"], c["b"]) for c in selected_colors]))
+            
+            # If this combination was already used, try again
+            attempts = 0
+            while color_ids in used_combinations and attempts < 50:
+                selected_colors = random.sample(hardcoded_colors, num_colors)
+                color_ids = tuple(sorted([(c["r"], c["g"], c["b"]) for c in selected_colors]))
+                attempts += 1
+            
+            # Mark this combination as used
+            used_combinations.add(color_ids)
 
             # Generate random ratios that add up to 1
             ratios = [random.random() for _ in range(len(selected_colors))]
@@ -102,36 +115,19 @@ def calculate_random_color_mix_ratios():
 
             # Add the generated color to the list
             generated_colors.append({
-                "name": "",  # Placeholder for the AI-generated name
+                "name": f"Mixed Color {i+1}",  # Placeholder name
                 "mixed_rgb": mixed_rgb,
-                "mixed_cmyk": cmyk_result["cmyk"],  # Add CMYK values
+                "mixed_cmyk": cmyk_result["cmyk"],
                 "source_colors": selected_colors,
-                "ratios": normalized_ratios  # Include the ratios for reference
+                "ratios": normalized_ratios,
+                "hex": f"#{mixed_rgb['r']:02x}{mixed_rgb['g']:02x}{mixed_rgb['b']:02x}"
             })
-
-        # Use Gemini AI to generate names for the colors
-        prompt = "Generate creative and fun names for the following colors:\n"
-        for color in generated_colors:
-            prompt += f"RGB: {color['mixed_rgb']}, CMYK: {color['mixed_cmyk']}\n"
-
-        # Initialize Vertex AI
-        aiplatform.init(project="shadesmithai", location="us-central1")
-
-        # Specify the endpoint for the Gemini AI model
-        endpoint = aiplatform.Endpoint(endpoint_name="projects/shadesmithai/locations/us-central1/endpoints/AQ.Ab8RN6JtZdNtwlTYVdZiMR1ytjXTKHsDKOE08ZEM_NjtAcy1AQ")
-
-        # Send the prompt to the model
-        response = endpoint.predict(instances=[{"content": prompt}])
-
-        # Parse the response and assign names
-        names = response.predictions[0]["content"].strip().split("\n")
-        for color, name in zip(generated_colors, names):
-            color["name"] = name.strip()
 
         return {
             "success": True,
             "generated_colors": generated_colors,
-            "message": "Successfully generated 10 new unique colors with RGB, CMYK, and names."
+            "total_colors": len(generated_colors),
+            "message": f"Successfully generated {len(generated_colors)} new unique colors by mixing 2-3 colors from the hardcoded palette."
         }
 
     except Exception as e:
