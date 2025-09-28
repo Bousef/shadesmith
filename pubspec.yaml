@@ -46,6 +46,13 @@ dependencies:
   # UI Enhancements
   google_fonts: ^6.2.1
   flutter_animate: ^4.5.0
+  
+  # Storage & Camera
+  shared_preferences: ^2.2.2
+  image_picker: ^1.0.7
+  
+  # HTTP Requests
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:

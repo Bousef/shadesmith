@@ -561,7 +561,7 @@ def convert_multiple_images():
             return jsonify({"error": "No valid image files uploaded"}), 400
         
         # Use the Image Converter Agent
-        result = image_converter_agent.tools[4](image_paths)  # convert_multiple_images_to_png
+        result = image_converter_agent.tools[1](image_paths)  # convert_multiple_images_to_png
         
         # Clean up uploaded files
         for path in image_paths:
