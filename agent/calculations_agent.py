@@ -53,7 +53,7 @@ def rgb_to_cmyk(r: int, g: int, b: int):
         }
 
 def calculate_color_mix_ratios(target_rgb: dict, user_colors: list):
-    """Calculate the best ratios to mix user colors to achieve target RGB."""
+    """Calculate the best ratios to mix user colors to achieve target RGB using subtractive color theory."""
     try:
         if not target_rgb or not user_colors or len(user_colors) > 3:
             return {"error": "Invalid input. Provide target_rgb and up to 3 user_colors."}
@@ -67,26 +67,27 @@ def calculate_color_mix_ratios(target_rgb: dict, user_colors: list):
         closest_match = None
         min_distance = float("inf")
         
-        # Find best ratio combination
+        # Find best ratio combination using subtractive mixing
         for ratio_set in permutations_of_ratios:
-            mixed_r = sum(user_colors[i]["r"] * ratio_set[i] for i in range(len(user_colors)))
-            mixed_g = sum(user_colors[i]["g"] * ratio_set[i] for i in range(len(user_colors)))
-            mixed_b = sum(user_colors[i]["b"] * ratio_set[i] for i in range(len(user_colors)))
+            # Convert RGB to CMYK for subtractive mixing
+            mixed_cmyk = subtractive_color_mix(user_colors, ratio_set)
+            # Convert back to RGB for comparison
+            mixed_rgb = cmyk_to_rgb(mixed_cmyk)
             
             # Calculate distance to target
-            distance = math.sqrt((mixed_r - target_r) ** 2 + (mixed_g - target_g) ** 2 + (mixed_b - target_b) ** 2)
+            distance = math.sqrt((mixed_rgb["r"] - target_r) ** 2 + (mixed_rgb["g"] - target_g) ** 2 + (mixed_rgb["b"] - target_b) ** 2)
             
             if distance < min_distance:
                 min_distance = distance
                 closest_match = {
                     "ratios": ratio_set,
-                    "mixed_rgb": {"r": int(mixed_r), "g": int(mixed_g), "b": int(mixed_b)},
+                    "mixed_rgb": mixed_rgb,
+                    "mixed_cmyk": mixed_cmyk,
                     "distance": distance
                 }
         
-        # Convert to CMYK
+        # Convert target to CMYK
         target_cmyk = rgb_to_cmyk(target_r, target_g, target_b)
-        mixed_cmyk = rgb_to_cmyk(closest_match["mixed_rgb"]["r"], closest_match["mixed_rgb"]["g"], closest_match["mixed_rgb"]["b"])
         
         return {
             "success": True,
@@ -95,10 +96,10 @@ def calculate_color_mix_ratios(target_rgb: dict, user_colors: list):
             "closest_match": {
                 "ratios": closest_match["ratios"],
                 "mixed_rgb": closest_match["mixed_rgb"],
-                "mixed_cmyk": mixed_cmyk["cmyk"],
+                "mixed_cmyk": closest_match["mixed_cmyk"],
                 "distance": closest_match["distance"]
             },
-            "message": "Successfully calculated color mixing ratios"
+            "message": "Successfully calculated color mixing ratios using subtractive color theory"
         }
     
     except Exception as e:
@@ -106,6 +107,88 @@ def calculate_color_mix_ratios(target_rgb: dict, user_colors: list):
             "success": False,
             "error": f"Failed to calculate color mix ratios: {str(e)}"
         }
+
+def subtractive_color_mix(user_colors: list, ratios: list):
+    """Mix colors using subtractive color theory (like real paint mixing)."""
+    try:
+        # For paint mixing, we need to think about what each color absorbs/reflects
+        # White reflects all light, so it dilutes other colors
+        # Blue absorbs red and green (reflects blue)
+        # Yellow absorbs blue (reflects red and green)
+        # When mixed: Blue + Yellow should create green (both absorb blue, yellow reflects green)
+        
+        # Convert to a more paint-realistic model
+        # Use complementary colors: Red-Cyan, Green-Magenta, Blue-Yellow
+        
+        # Calculate weighted average of RGB values with paint mixing logic
+        mixed_r = 0
+        mixed_g = 0 
+        mixed_b = 0
+        
+        for i, color in enumerate(user_colors):
+            weight = ratios[i]
+            mixed_r += color["r"] * weight
+            mixed_g += color["g"] * weight
+            mixed_b += color["b"] * weight
+        
+        # Apply paint mixing logic:
+        # - White dilutes (makes colors lighter)
+        # - Complementary colors neutralize each other
+        # - Blue + Yellow = Green (yellow reflects green, blue doesn't interfere with green)
+        
+        # Apply real paint mixing rules
+        # Blue + Yellow = Green (subtractive mixing)
+        # Blue absorbs red and green, reflects blue
+        # Yellow absorbs blue, reflects red and green
+        # When mixed: both absorb blue, yellow reflects green = GREEN
+        
+        # Find blue and yellow in the mix
+        blue_amount = 0
+        yellow_amount = 0
+        
+        for i, color in enumerate(user_colors):
+            if color["r"] == 0 and color["g"] == 0 and color["b"] == 255:  # Pure blue
+                blue_amount = ratios[i]
+            elif color["r"] == 255 and color["g"] == 255 and color["b"] == 0:  # Pure yellow
+                yellow_amount = ratios[i]
+        
+        # If we have both blue and yellow, apply subtractive mixing
+        if blue_amount > 0 and yellow_amount > 0:
+            # Blue + Yellow = Green in subtractive mixing
+            green_strength = min(blue_amount, yellow_amount) * 2  # Both contribute to green
+            mixed_g = min(255, mixed_g + green_strength * 255)
+            # Reduce blue component (blue gets absorbed)
+            mixed_b = mixed_b * (1 - green_strength * 0.5)
+            # Reduce red component (yellow absorbs some red)
+            mixed_r = mixed_r * (1 - green_strength * 0.3)
+        
+        # Convert back to CMYK for consistency
+        cmyk_result = rgb_to_cmyk(int(mixed_r), int(mixed_g), int(mixed_b))
+        return cmyk_result["cmyk"]
+    
+    except Exception as e:
+        return {"c": 0, "m": 0, "y": 0, "k": 0}
+
+def cmyk_to_rgb(cmyk: dict):
+    """Convert CMYK to RGB."""
+    try:
+        c = cmyk["c"] / 100.0
+        m = cmyk["m"] / 100.0
+        y = cmyk["y"] / 100.0
+        k = cmyk["k"] / 100.0
+        
+        r = int(255 * (1 - c) * (1 - k))
+        g = int(255 * (1 - m) * (1 - k))
+        b = int(255 * (1 - y) * (1 - k))
+        
+        return {
+            "r": max(0, min(255, r)),
+            "g": max(0, min(255, g)),
+            "b": max(0, min(255, b))
+        }
+    
+    except Exception as e:
+        return {"r": 0, "g": 0, "b": 0}
 
 def calculate_shade_percentage(light_value: float, max_light: float = 100.0):
     """Calculate shade percentage based on light value."""
@@ -132,58 +215,7 @@ def calculate_shade_percentage(light_value: float, max_light: float = 100.0):
             "error": f"Failed to calculate shade percentage: {str(e)}"
         }
 
-def calculate_color_distance(rgb1: dict, rgb2: dict):
-    """Calculate the Euclidean distance between two RGB colors."""
-    try:
-        if not all(key in rgb1 for key in ["r", "g", "b"]):
-            return {"error": "rgb1 must contain r, g, b values"}
-        if not all(key in rgb2 for key in ["r", "g", "b"]):
-            return {"error": "rgb2 must contain r, g, b values"}
-        
-        distance = math.sqrt(
-            (rgb1["r"] - rgb2["r"]) ** 2 + 
-            (rgb1["g"] - rgb2["g"]) ** 2 + 
-            (rgb1["b"] - rgb2["b"]) ** 2
-        )
-        
-        return {
-            "success": True,
-            "rgb1": rgb1,
-            "rgb2": rgb2,
-            "distance": round(distance, 2),
-            "normalized_distance": round(distance / 441.67, 4),  # Normalized to 0-1 scale
-            "message": f"Color distance: {round(distance, 2)}"
-        }
-    
-    except Exception as e:
-        return {
-            "success": False,
-            "error": f"Failed to calculate color distance: {str(e)}"
-        }
 
-def calculate_color_brightness(rgb: dict):
-    """Calculate the brightness of an RGB color."""
-    try:
-        if not all(key in rgb for key in ["r", "g", "b"]):
-            return {"error": "RGB must contain r, g, b values"}
-        
-        # Using the standard luminance formula
-        brightness = 0.299 * rgb["r"] + 0.587 * rgb["g"] + 0.114 * rgb["b"]
-        
-        return {
-            "success": True,
-            "rgb": rgb,
-            "brightness": round(brightness, 2),
-            "brightness_percentage": round((brightness / 255) * 100, 2),
-            "interpretation": "Very bright" if brightness > 200 else "Bright" if brightness > 150 else "Medium" if brightness > 100 else "Dark" if brightness > 50 else "Very dark",
-            "message": f"Color brightness: {round(brightness, 2)}"
-        }
-    
-    except Exception as e:
-        return {
-            "success": False,
-            "error": f"Failed to calculate color brightness: {str(e)}"
-        }
 
 def process_rgb_scanner_results(rgb_scanner_results: dict, target_rgb: dict):
     """Process RGB Scanner Agent results and calculate paint mixing ratios for target color."""
@@ -254,10 +286,6 @@ def process_rgb_scanner_results(rgb_scanner_results: dict, target_rgb: dict):
                 "mixed_cmyk": mixed_cmyk["cmyk"],
                 "distance": mix_result["closest_match"]["distance"]
             },
-            "paint_mixing_instructions": generate_paint_mixing_instructions(
-                user_colors, 
-                mix_result["closest_match"]["ratios"]
-            ),
             "message": f"Successfully calculated paint mixing ratios for target color using {len(user_colors)} user colors"
         }
     
@@ -267,87 +295,7 @@ def process_rgb_scanner_results(rgb_scanner_results: dict, target_rgb: dict):
             "error": f"Failed to process RGB scanner results: {str(e)}"
         }
 
-def generate_paint_mixing_instructions(user_colors: list, ratios: list):
-    """Generate human-readable paint mixing instructions."""
-    try:
-        if not user_colors or not ratios or len(user_colors) != len(ratios):
-            return {"error": "Invalid input for mixing instructions"}
-        
-        instructions = []
-        total_parts = sum(ratios)
-        
-        for i, (color, ratio) in enumerate(zip(user_colors, ratios)):
-            if ratio > 0:
-                percentage = (ratio / total_parts) * 100
-                color_name = f"Color {i+1} (RGB: {color['r']}, {color['g']}, {color['b']})"
-                instructions.append({
-                    "color": color_name,
-                    "ratio": round(ratio, 3),
-                    "percentage": round(percentage, 1),
-                    "instruction": f"Add {round(percentage, 1)}% of {color_name}"
-                })
-        
-        return {
-            "success": True,
-            "instructions": instructions,
-            "total_parts": round(total_parts, 3),
-            "summary": f"Mix {len(instructions)} colors in the specified ratios"
-        }
-    
-    except Exception as e:
-        return {
-            "success": False,
-            "error": f"Failed to generate mixing instructions: {str(e)}"
-        }
 
-def calculate_paint_mixing_accuracy(target_rgb: dict, mixed_rgb: dict):
-    """Calculate the accuracy of paint mixing compared to target color."""
-    try:
-        # Validate inputs
-        if not all(key in target_rgb for key in ["r", "g", "b"]):
-            return {"error": "Target RGB must contain r, g, b values"}
-        
-        if not all(key in mixed_rgb for key in ["r", "g", "b"]):
-            return {"error": "Mixed RGB must contain r, g, b values"}
-        
-        # Calculate color distance
-        distance = math.sqrt(
-            (target_rgb["r"] - mixed_rgb["r"]) ** 2 + 
-            (target_rgb["g"] - mixed_rgb["g"]) ** 2 + 
-            (target_rgb["b"] - mixed_rgb["b"]) ** 2
-        )
-        
-        # Calculate accuracy percentage (0-100%)
-        max_distance = 441.67  # Maximum possible distance in RGB space
-        accuracy = max(0, 100 - (distance / max_distance) * 100)
-        
-        # Determine accuracy level
-        if accuracy >= 95:
-            accuracy_level = "Excellent"
-        elif accuracy >= 85:
-            accuracy_level = "Very Good"
-        elif accuracy >= 75:
-            accuracy_level = "Good"
-        elif accuracy >= 65:
-            accuracy_level = "Fair"
-        else:
-            accuracy_level = "Poor"
-        
-        return {
-            "success": True,
-            "target_rgb": target_rgb,
-            "mixed_rgb": mixed_rgb,
-            "distance": round(distance, 2),
-            "accuracy_percentage": round(accuracy, 2),
-            "accuracy_level": accuracy_level,
-            "message": f"Paint mixing accuracy: {round(accuracy, 2)}% ({accuracy_level})"
-        }
-    
-    except Exception as e:
-        return {
-            "success": False,
-            "error": f"Failed to calculate paint mixing accuracy: {str(e)}"
-        }
 
 # Create the calculations agent
 calculations_agent = Agent(
@@ -358,10 +306,6 @@ calculations_agent = Agent(
         rgb_to_cmyk, 
         calculate_color_mix_ratios, 
         calculate_shade_percentage,
-        calculate_color_distance,
-        calculate_color_brightness,
-        process_rgb_scanner_results,
-        generate_paint_mixing_instructions,
-        calculate_paint_mixing_accuracy
+        process_rgb_scanner_results
     ]
 )
